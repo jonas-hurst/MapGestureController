@@ -16,14 +16,15 @@ from model import *
 from time import time
 
 import threading
+from typing import Union
 
 
 class GestureController:
     def __init__(self, visualize=True):
         pykinect.initialize_libraries(track_body=True)
 
-        self.device: pykinect.Device = self.startCamera()
-        self.tracker: pykinect.Tracker = self.startTracker()
+        self.device: Union[pykinect.Device, None] = None
+        self.tracker: Union[pykinect.Tracker, None] = None
 
         self.body_frame = None
 
@@ -43,6 +44,9 @@ class GestureController:
         self.fps = 0
 
     def start_cameraloop(self):
+        self.device: Union[pykinect.Device, None] = self.startCamera()
+        self.tracker: Union[pykinect.Tracker, None] = self.startTracker()
+
         with mp.solutions.hands.Hands(static_image_mode=False, max_num_hands=2, model_complexity=0) as hands:
             while True:
                 self.fps = self.cvFpsCalc.get()

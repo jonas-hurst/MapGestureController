@@ -45,13 +45,10 @@ class GestureController:
     def start_cameraloop(self):
         with mp.solutions.hands.Hands(static_image_mode=False, max_num_hands=2, model_complexity=0) as hands:
             while True:
-                t0 = time()
                 self.fps = self.cvFpsCalc.get()
                 self.captureFrame(hands)
                 if cv.waitKey(1) == ord("q"):
                     break
-                t1 = time()
-                print(t1 - t0)
 
     def startCamera(self):
         device_config = pykinect.default_configuration
@@ -152,7 +149,8 @@ class GestureController:
 
 
 def main():
-    GestureController(visualize=True)
+    gc = GestureController(visualize=True)
+    gc.start_cameraloop()
 
 
 if __name__ == "__main__":

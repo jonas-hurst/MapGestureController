@@ -1,5 +1,5 @@
 .idea
 
-mp.py
-mpTest.py
-exampleBodyTrackingColorCamera.py
+src/mp.py
+src/mpTest.py
+src/exampleBodyTrackingColorCamera.py

@@ -25,6 +25,8 @@ class GestureController:
         self.device: pykinect.Device = self.startCamera()
         self.tracker: pykinect.Tracker = self.startTracker()
 
+        self.body_frame = None
+
         self.handProcessThread = threading.Thread()
         self.mp_drawing = mp.solutions.drawing_utils
         self.mp_drawing_styles = mp.solutions.drawing_styles
@@ -77,17 +79,17 @@ class GestureController:
         if not ret:
             return
 
-        body_frame = self.tracker.update()
+        self.body_frame = self.tracker.update()
 
         if not self.handProcessThread.is_alive():
             self.handProcessThread = threading.Thread(target=self.process_hands, args=(hands, color_image))
             self.handProcessThread.start()
 
         if self.visualize:
-            self.visualizeImage(color_image, body_frame)
+            self.visualizeImage(color_image)
 
-    def visualizeImage(self, image, body_frame):
-        color_image = body_frame.draw_bodies(image, pykinect.K4A_CALIBRATION_TYPE_COLOR)
+    def visualizeImage(self, image):
+        color_image = self.body_frame.draw_bodies(image, pykinect.K4A_CALIBRATION_TYPE_COLOR)
 
         if self.handresult is not None and self.handresult.multi_hand_landmarks:
             for landmark, handedness, brect, hand_sign_id in \

@@ -42,6 +42,7 @@ class GestureController:
         self.cvFpsCalc = CvFpsCalc(buffer_len=10)
         self.fps = 0
 
+    def start_cameraloop(self):
         with mp.solutions.hands.Hands(static_image_mode=False, max_num_hands=2, model_complexity=0) as hands:
             while True:
                 t0 = time()

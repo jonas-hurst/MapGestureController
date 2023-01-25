@@ -28,9 +28,14 @@ class GestureController:
 
         self.body_frame = None
 
+        self.camera_running = False
+
+        self.color_image_bgr: Union[np.ndarray, None] = None
+
         self.handProcessThread = threading.Thread()
         self.mp_drawing = mp.solutions.drawing_utils
         self.mp_drawing_styles = mp.solutions.drawing_styles
+        self.hands: Union[mp.solutions.hands.Hands, None] = None
         self.handresult = None
 
         self.keypoint_classifier = KeyPointClassifier()
@@ -44,15 +49,16 @@ class GestureController:
         self.fps = 0
 
     def start_cameraloop(self):
-        self.device: Union[pykinect.Device, None] = self.startCamera()
-        self.tracker: Union[pykinect.Tracker, None] = self.startTracker()
+        while True:
+            self.captureFrame()
+            if cv.waitKey(1) == ord("q") or not self.camera_running:
+                break
 
-        with mp.solutions.hands.Hands(static_image_mode=False, max_num_hands=2, model_complexity=0) as hands:
-            while True:
-                self.fps = self.cvFpsCalc.get()
-                self.captureFrame(hands)
-                if cv.waitKey(1) == ord("q"):
-                    break
+    def initialize_tracking(self):
+        self.device = self.startCamera()
+        self.tracker = self.startTracker()
+        self.hands = mp.solutions.hands.Hands(static_image_mode=False, max_num_hands=2, model_complexity=0)
+        self.camera_running = True
 
     def startCamera(self):
         device_config = pykinect.default_configuration
@@ -72,11 +78,19 @@ class GestureController:
         bodytracker = pykinect.start_body_tracker(tracker_configuration=tracker_config)
         return bodytracker
 
-    def captureFrame(self, hands):
+    def stopDevice(self):
+        self.device.close()
+        self.device = None
+        self.hands.close()
+
+    def captureFrame(self):
+        print("capture")
+        self.fps = self.cvFpsCalc.get()
+
         capture = self.device.update()
 
         # Get the color image from the capture
-        ret, color_image = capture.get_color_image()
+        ret, color_image_bgr = capture.get_color_image()
 
         if not ret:
             return
@@ -84,14 +98,14 @@ class GestureController:
         self.body_frame = self.tracker.update()
 
         if not self.handProcessThread.is_alive():
-            self.handProcessThread = threading.Thread(target=self.process_hands, args=(hands, color_image))
+            self.handProcessThread = threading.Thread(target=self.process_hands, args=(color_image_bgr,))
             self.handProcessThread.start()
 
         if self.visualize:
-            self.visualizeImage(color_image)
+            self.visualizeImage(color_image_bgr)
 
-    def visualizeImage(self, image):
-        color_image = self.body_frame.draw_bodies(image, pykinect.K4A_CALIBRATION_TYPE_COLOR)
+    def visualizeImage(self, color_image):
+        self.body_frame.draw_bodies(color_image, pykinect.K4A_CALIBRATION_TYPE_COLOR)
 
         if self.handresult is not None and self.handresult.multi_hand_landmarks:
             for landmark, handedness, brect, hand_sign_id in \
@@ -111,24 +125,25 @@ class GestureController:
                     # point_history_classifier_labels[most_common_fg_id[0][0]],
                             )
 
-        cv.putText(image, "FPS:" + str(self.fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 0), 4, cv.LINE_AA)
-        cv.putText(image, "FPS:" + str(self.fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2, cv.LINE_AA)
+        cv.putText(color_image, "FPS:" + str(self.fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 0), 4, cv.LINE_AA)
+        cv.putText(color_image, "FPS:" + str(self.fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2, cv.LINE_AA)
 
-        cv.imshow("color image", color_image)
+        self.color_image_bgr = color_image
+        # cv.imshow("color image", color_image)
 
-    def process_hands(self, hands, imageBGR):
-        color_image_rgb = cv.cvtColor(imageBGR, cv.COLOR_BGR2RGB)
+    def process_hands(self, color_image_bgr):
+        color_image_rgb = cv.cvtColor(color_image_bgr, cv.COLOR_BGR2RGB)
         color_image_rgb.flags.writeable = False
-        self.handresult = hands.process(color_image_rgb)
+        self.handresult = self.hands.process(color_image_rgb)
 
         self.brects = []
         self.hand_sign_ids = []
         if self.handresult.multi_hand_landmarks:
             for landmark, handedness in zip(self.handresult.multi_hand_landmarks, self.handresult.multi_handedness):
                 # calcualte bbox for hand
-                self.brects.append(calc_bounding_rect(imageBGR, landmark))
+                self.brects.append(calc_bounding_rect(color_image_bgr, landmark))
                 # create landmark list
-                landmark_list = calc_landmark_list(imageBGR, landmark)
+                landmark_list = calc_landmark_list(color_image_bgr, landmark)
                 # pre-process landmark list
                 pre_processed_landmark_list = pre_process_landmark(landmark_list)
                 # classify hand state
@@ -154,6 +169,7 @@ class GestureController:
 
 def main():
     gc = GestureController(visualize=True)
+    gc.camera_running = True
     gc.start_cameraloop()
 
 

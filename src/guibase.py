@@ -17,7 +17,7 @@ import wx.xrc
 class Guibase ( wx.Frame ):
 
 	def __init__( self, parent ):
-		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = wx.EmptyString, pos = wx.DefaultPosition, size = wx.Size( 500,300 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
+		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = wx.EmptyString, pos = wx.DefaultPosition, size = wx.Size( -1,-1 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
 
 		self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
 
@@ -25,8 +25,8 @@ class Guibase ( wx.Frame ):
 		fgSizer1.SetFlexibleDirection( wx.BOTH )
 		fgSizer1.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
-		self.camerafeed = wx.StaticBitmap( self, wx.ID_ANY, wx.NullBitmap, wx.DefaultPosition, wx.DefaultSize, 0 )
-		fgSizer1.Add( self.camerafeed, 0, wx.ALL, 5 )
+
+		fgSizer1.Add( ( 854, 480), 1, wx.EXPAND, 5 )
 
 		bSizer1 = wx.BoxSizer( wx.VERTICAL )
 
@@ -45,10 +45,12 @@ class Guibase ( wx.Frame ):
 
 		self.SetSizer( fgSizer1 )
 		self.Layout()
+		fgSizer1.Fit( self )
 
 		self.Centre( wx.BOTH )
 
 		# Connect Events
+		self.Bind( wx.EVT_CLOSE, self.on_close )
 		self.tgl_btn_start_camera.Bind( wx.EVT_TOGGLEBUTTON, self.on_tgl_camera )
 
 	def __del__( self ):
@@ -56,6 +58,9 @@ class Guibase ( wx.Frame ):
 
 
 	# Virtual event handlers, override them in your derived class
+	def on_close( self, event ):
+		event.Skip()
+
 	def on_tgl_camera( self, event ):
 		event.Skip()
 

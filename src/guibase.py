@@ -49,14 +49,14 @@ class Guibase ( wx.Frame ):
 		self.Centre( wx.BOTH )
 
 		# Connect Events
-		self.tgl_btn_start_camera.Bind( wx.EVT_TOGGLEBUTTON, self.on_start_camera )
+		self.tgl_btn_start_camera.Bind( wx.EVT_TOGGLEBUTTON, self.on_tgl_camera )
 
 	def __del__( self ):
 		pass
 
 
 	# Virtual event handlers, override them in your derived class
-	def on_start_camera( self, event ):
+	def on_tgl_camera( self, event ):
 		event.Skip()
 
 

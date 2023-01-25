@@ -25,8 +25,8 @@ class Guibase ( wx.Frame ):
 		fgSizer1.SetFlexibleDirection( wx.BOTH )
 		fgSizer1.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
-		self.m_bitmap1 = wx.StaticBitmap( self, wx.ID_ANY, wx.NullBitmap, wx.DefaultPosition, wx.DefaultSize, 0 )
-		fgSizer1.Add( self.m_bitmap1, 0, wx.ALL, 5 )
+		self.camerafeed = wx.StaticBitmap( self, wx.ID_ANY, wx.NullBitmap, wx.DefaultPosition, wx.DefaultSize, 0 )
+		fgSizer1.Add( self.camerafeed, 0, wx.ALL, 5 )
 
 		bSizer1 = wx.BoxSizer( wx.VERTICAL )
 

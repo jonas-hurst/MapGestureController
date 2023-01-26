@@ -11,36 +11,35 @@ class GestureController:
     def __init__(self, visualize=True):
         pykinect.initialize_libraries(track_body=True)
 
-        self.device: Union[pykinect.Device, None] = None
-        self.tracker: Union[pykinect.Tracker, None] = None
+        self.camera_running = False
+        self.fps: float = 0
+        self.color_image_bgr: Union[np.ndarray, None] = None
+
+        self.__device: Union[pykinect.Device, None] = None
+        self.__tracker: Union[pykinect.Tracker, None] = None
 
         self.body_frame = None
 
-        self.camera_running = False
-
-        self.color_image_bgr: Union[np.ndarray, None] = None
-
-        self.handProcessThread = threading.Thread()
-        self.mp_drawing = mp.solutions.drawing_utils
-        self.mp_drawing_styles = mp.solutions.drawing_styles
-        self.hands: Union[mp.solutions.hands.Hands, None] = None
+        self.__handProcessThread = threading.Thread()
+        self.__mp_drawing = mp.solutions.drawing_utils
+        self.__mp_drawing_styles = mp.solutions.drawing_styles
+        self.__hands: Union[mp.solutions.hands.Hands, None] = None
         self.handresult = None
 
-        self.keypoint_classifier: Union[KeyPointClassifier, None] = None
-        self.hand_sign_ids = []
-        self.brects = []
-        self.keypoint_classifier_labels = ["Opened", "Closed", "Pointer"]
+        self.__keypoint_classifier: Union[KeyPointClassifier, None] = None
+        self.__hand_sign_ids = []
+        self.__brects = []
+        self.__keypoint_classifier_labels = ["Opened", "Closed", "Pointer"]
 
         self.visualize: bool = visualize
 
-        self.cvFpsCalc = CvFpsCalc(buffer_len=10)
-        self.fps = 0
+        self.__cvFpsCalc = CvFpsCalc(buffer_len=10)
 
     def initialize_tracking(self):
-        self.device = self.startCamera()
-        self.tracker = self.startTracker()
-        self.hands = mp.solutions.hands.Hands(static_image_mode=False, max_num_hands=2, model_complexity=0)
-        self.keypoint_classifier = KeyPointClassifier()
+        self.__device = self.startCamera()
+        self.__tracker = self.startTracker()
+        self.__hands = mp.solutions.hands.Hands(static_image_mode=False, max_num_hands=2, model_complexity=0)
+        self.__keypoint_classifier = KeyPointClassifier()
         self.camera_running = True
 
     def startCamera(self):
@@ -62,15 +61,15 @@ class GestureController:
         return bodytracker
 
     def stopDevice(self):
-        self.device.close()
-        self.device = None
-        self.hands.close()
-        self.keypoint_classifier = None
+        self.__device.close()
+        self.__device = None
+        self.__hands.close()
+        self.__keypoint_classifier = None
 
     def captureFrame(self):
-        self.fps = self.cvFpsCalc.get()
+        self.fps = self.__cvFpsCalc.get()
 
-        capture = self.device.update()
+        capture = self.__device.update()
 
         # Get the color image from the capture
         ret, color_image_bgr = capture.get_color_image()
@@ -78,11 +77,11 @@ class GestureController:
         if not ret:
             return
 
-        self.body_frame = self.tracker.update()
+        self.body_frame = self.__tracker.update()
 
-        if not self.handProcessThread.is_alive():
-            self.handProcessThread = threading.Thread(target=self.process_hands, args=(color_image_bgr,))
-            self.handProcessThread.start()
+        if not self.__handProcessThread.is_alive():
+            self.__handProcessThread = threading.Thread(target=self.process_hands, args=(color_image_bgr,))
+            self.__handProcessThread.start()
 
         if self.visualize:
             self.visualizeImage(color_image_bgr)
@@ -92,8 +91,8 @@ class GestureController:
 
         if self.handresult is not None and self.handresult.multi_hand_landmarks:
             for landmark, handedness, brect, hand_sign_id in \
-                    zip(self.handresult.multi_hand_landmarks, self.handresult.multi_handedness, self.brects, self.hand_sign_ids):
-                self.mp_drawing.draw_landmarks(
+                    zip(self.handresult.multi_hand_landmarks, self.handresult.multi_handedness, self.__brects, self.__hand_sign_ids):
+                self.__mp_drawing.draw_landmarks(
                     color_image,
                     landmark,
                     mp.solutions.hands.HAND_CONNECTIONS,
@@ -103,7 +102,7 @@ class GestureController:
                     color_image,
                     brect,
                     handedness,
-                    self.keypoint_classifier_labels[hand_sign_id],
+                    self.__keypoint_classifier_labels[hand_sign_id],
                     "no finger gesture"
                     # point_history_classifier_labels[most_common_fg_id[0][0]],
                             )
@@ -117,20 +116,20 @@ class GestureController:
     def process_hands(self, color_image_bgr):
         color_image_rgb = cv.cvtColor(color_image_bgr, cv.COLOR_BGR2RGB)
         color_image_rgb.flags.writeable = False
-        self.handresult = self.hands.process(color_image_rgb)
+        self.handresult = self.__hands.process(color_image_rgb)
 
-        self.brects = []
-        self.hand_sign_ids = []
+        self.__brects = []
+        self.__hand_sign_ids = []
         if self.handresult.multi_hand_landmarks:
             for landmark, handedness in zip(self.handresult.multi_hand_landmarks, self.handresult.multi_handedness):
                 # calcualte bbox for hand
-                self.brects.append(calc_bounding_rect(color_image_bgr, landmark))
+                self.__brects.append(calc_bounding_rect(color_image_bgr, landmark))
                 # create landmark list
                 landmark_list = calc_landmark_list(color_image_bgr, landmark)
                 # pre-process landmark list
                 pre_processed_landmark_list = pre_process_landmark(landmark_list)
                 # classify hand state
-                self.hand_sign_ids.append(self.keypoint_classifier(pre_processed_landmark_list))
+                self.__hand_sign_ids.append(self.__keypoint_classifier(pre_processed_landmark_list))
 
     def draw_info_text(self, image, brect, handedness, hand_sign_text, finger_gesture_text):
         cv.rectangle(image, (brect[0], brect[1]), (brect[2], brect[1] - 22),

@@ -84,7 +84,6 @@ class GestureController:
         self.hands.close()
 
     def captureFrame(self):
-        print("capture")
         self.fps = self.cvFpsCalc.get()
 
         capture = self.device.update()

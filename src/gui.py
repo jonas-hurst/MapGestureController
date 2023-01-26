@@ -12,8 +12,6 @@ class MainWindow(Guibase):
 
         width, height = 854, 480
 
-        #self.SetSize((width, height))
-
         frame = np.zeros((width, height, 3))
         self.bmp = wx.Bitmap.FromBuffer(width, height, frame)
         self.image_container.SetInactiveBitmap(self.bmp)

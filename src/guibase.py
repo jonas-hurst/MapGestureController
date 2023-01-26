@@ -9,6 +9,7 @@
 
 import wx
 import wx.xrc
+import wx.adv
 
 ###########################################################################
 ## Class Guibase
@@ -25,8 +26,8 @@ class Guibase ( wx.Frame ):
 		fgSizer1.SetFlexibleDirection( wx.BOTH )
 		fgSizer1.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
-
-		fgSizer1.Add( ( 854, 480), 1, wx.EXPAND, 5 )
+		self.image_container = wx.adv.AnimationCtrl( self, wx.ID_ANY, wx.adv.NullAnimation, wx.DefaultPosition, wx.Size( 900,500 ), wx.adv.AC_DEFAULT_STYLE )
+		fgSizer1.Add( self.image_container, 0, wx.ALL, 5 )
 
 		bSizer1 = wx.BoxSizer( wx.VERTICAL )
 

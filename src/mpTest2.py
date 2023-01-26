@@ -26,7 +26,7 @@ class GestureController:
         self.hands: Union[mp.solutions.hands.Hands, None] = None
         self.handresult = None
 
-        self.keypoint_classifier = KeyPointClassifier()
+        self.keypoint_classifier: Union[KeyPointClassifier, None] = None
         self.hand_sign_ids = []
         self.brects = []
         self.keypoint_classifier_labels = ["Opened", "Closed", "Pointer"]
@@ -40,6 +40,7 @@ class GestureController:
         self.device = self.startCamera()
         self.tracker = self.startTracker()
         self.hands = mp.solutions.hands.Hands(static_image_mode=False, max_num_hands=2, model_complexity=0)
+        self.keypoint_classifier = KeyPointClassifier()
         self.camera_running = True
 
     def startCamera(self):
@@ -64,6 +65,7 @@ class GestureController:
         self.device.close()
         self.device = None
         self.hands.close()
+        self.keypoint_classifier = None
 
     def captureFrame(self):
         self.fps = self.cvFpsCalc.get()

@@ -7,7 +7,7 @@ import threading
 from typing import Union
 
 
-class GestureController:
+class TrackerController:
     def __init__(self, visualize=True):
         pykinect.initialize_libraries(track_body=True)
 

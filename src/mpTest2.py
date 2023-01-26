@@ -1,20 +1,8 @@
-import copy
-import csv
-import itertools
-import cv2 as cv
-
 import pykinect_azure as pykinect
-
 import mediapipe as mp
-
 import numpy as np
-
 from utils import CvFpsCalc
-
 from model import *
-
-from time import time
-
 import threading
 from typing import Union
 
@@ -47,12 +35,6 @@ class GestureController:
 
         self.cvFpsCalc = CvFpsCalc(buffer_len=10)
         self.fps = 0
-
-    def start_cameraloop(self):
-        while True:
-            self.captureFrame()
-            if cv.waitKey(1) == ord("q") or not self.camera_running:
-                break
 
     def initialize_tracking(self):
         self.device = self.startCamera()
@@ -164,13 +146,3 @@ class GestureController:
             cv.putText(image, "Finger Gesture:" + finger_gesture_text, (10, 60),
                        cv.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2,
                        cv.LINE_AA)
-
-
-def main():
-    gc = GestureController(visualize=True)
-    gc.camera_running = True
-    gc.start_cameraloop()
-
-
-if __name__ == "__main__":
-    main()

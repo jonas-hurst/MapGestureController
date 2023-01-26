@@ -25,6 +25,8 @@ class MainWindow(Guibase):
             self.start_camera()
         else:
             self.stop_camera()
+        self.tgl_btn_show_feed.Enable(btn_value)
+        self.tgl_btn_touchcontrol.Enable(btn_value)
 
     def on_close( self, event ):
         if self.__tracker_controller.camera_running:

@@ -35,9 +35,13 @@ class Guibase ( wx.Frame ):
 		bSizer1.Add( self.tgl_btn_start_camera, 0, wx.ALL|wx.EXPAND, 5 )
 
 		self.tgl_btn_show_feed = wx.ToggleButton( self, wx.ID_ANY, u"Show Feed", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.tgl_btn_show_feed.Enable( False )
+
 		bSizer1.Add( self.tgl_btn_show_feed, 0, wx.ALL|wx.EXPAND, 5 )
 
 		self.tgl_btn_touchcontrol = wx.ToggleButton( self, wx.ID_ANY, u"Enable TouchControl", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.tgl_btn_touchcontrol.Enable( False )
+
 		bSizer1.Add( self.tgl_btn_touchcontrol, 0, wx.ALL|wx.EXPAND, 5 )
 
 

@@ -37,6 +37,7 @@ class TrackerController:
 
         self.camera_running = False
         self.fps: float = 0
+        self.visualize: bool = visualize
         self.color_image_bgr: Union[np.ndarray, None] = None
 
         self.__device: Union[pykinect.Device, None] = None
@@ -54,8 +55,6 @@ class TrackerController:
         self.__hand_sign_ids = []
         self.__brects = []
         self.__keypoint_classifier_labels = ["Opened", "Closed", "Pointer"]
-
-        self.visualize: bool = visualize
 
         self.__cvFpsCalc = CvFpsCalc(buffer_len=10)
 

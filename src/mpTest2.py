@@ -42,13 +42,13 @@ class TrackerController:
         self.__device: Union[pykinect.Device, None] = None
         self.__tracker: Union[pykinect.Tracker, None] = None
 
-        self.body_frame = None
+        self.__body_frame = None
 
         self.__handProcessThread = threading.Thread()
         self.__mp_drawing = mp.solutions.drawing_utils
         self.__mp_drawing_styles = mp.solutions.drawing_styles
         self.__hands: Union[mp.solutions.hands.Hands, None] = None
-        self.handresult = None
+        self.__handresult = None
 
         self.__keypoint_classifier: Union[KeyPointClassifier, None] = None
         self.__hand_sign_ids = []
@@ -101,7 +101,7 @@ class TrackerController:
         if not ret:
             return
 
-        self.body_frame = self.__tracker.update()
+        self.__body_frame = self.__tracker.update()
 
         if not self.__handProcessThread.is_alive():
             self.__handProcessThread = threading.Thread(target=self.process_hands, args=(color_image_bgr,))
@@ -111,11 +111,11 @@ class TrackerController:
             self.visualizeImage(color_image_bgr)
 
     def visualizeImage(self, color_image):
-        self.body_frame.draw_bodies(color_image, pykinect.K4A_CALIBRATION_TYPE_COLOR)
+        self.__body_frame.draw_bodies(color_image, pykinect.K4A_CALIBRATION_TYPE_COLOR)
 
-        if self.handresult is not None and self.handresult.multi_hand_landmarks:
+        if self.__handresult is not None and self.__handresult.multi_hand_landmarks:
             for landmark, handedness, brect, hand_sign_id in \
-                    zip(self.handresult.multi_hand_landmarks, self.handresult.multi_handedness, self.__brects, self.__hand_sign_ids):
+                    zip(self.__handresult.multi_hand_landmarks, self.__handresult.multi_handedness, self.__brects, self.__hand_sign_ids):
                 self.__mp_drawing.draw_landmarks(
                     color_image,
                     landmark,
@@ -140,12 +140,12 @@ class TrackerController:
     def process_hands(self, color_image_bgr):
         color_image_rgb = cv.cvtColor(color_image_bgr, cv.COLOR_BGR2RGB)
         color_image_rgb.flags.writeable = False
-        self.handresult = self.__hands.process(color_image_rgb)
+        self.__handresult = self.__hands.process(color_image_rgb)
 
         self.__brects = []
         self.__hand_sign_ids = []
-        if self.handresult.multi_hand_landmarks:
-            for landmark, handedness in zip(self.handresult.multi_hand_landmarks, self.handresult.multi_handedness):
+        if self.__handresult.multi_hand_landmarks:
+            for landmark, handedness in zip(self.__handresult.multi_hand_landmarks, self.__handresult.multi_handedness):
                 # calcualte bbox for hand
                 self.__brects.append(calc_bounding_rect(color_image_bgr, landmark))
                 # create landmark list

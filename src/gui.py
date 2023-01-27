@@ -35,5 +35,10 @@ class MainWindow(GuibaseExtended):
         while True:
             self.__tracker_controller.captureFrame()
             self.set_bitmap(self.__tracker_controller.color_image_bgr)
+
+            infodata = {"fps": self.__tracker_controller.fps,
+                        "bodies": self.__tracker_controller.number_tracked_bodies}
+            self.set_datagrid_values(infodata)
+
             if not self.__tracker_controller.camera_running:
                 break

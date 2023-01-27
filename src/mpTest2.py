@@ -39,6 +39,7 @@ class TrackerController:
         self.fps: float = 0
         self.visualize: bool = visualize
         self.color_image_bgr: Union[np.ndarray, None] = None
+        self.number_tracked_bodies = 0
 
         self.__device: Union[pykinect.Device, None] = None
         self.__tracker: Union[pykinect.Tracker, None] = None
@@ -101,6 +102,8 @@ class TrackerController:
             return
 
         self.__body_frame = self.__tracker.update()
+
+        self.number_tracked_bodies = self.__body_frame.get_num_bodies()
 
         if not self.__handProcessThread.is_alive():
             self.__handProcessThread = threading.Thread(target=self.process_hands, args=(color_image_bgr,))

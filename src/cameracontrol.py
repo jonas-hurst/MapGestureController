@@ -7,7 +7,8 @@ from model import *
 import threading
 from typing import Union
 import geom
-from constants import HandState
+from constants import HandState, Handednes
+from numbers import Real
 
 
 class BodyResult:
@@ -31,6 +32,13 @@ class BodyResult:
                                                       body.joints[pykinect.K4ABT_JOINT_ELBOW_RIGHT].position.y,
                                                       body.joints[pykinect.K4ABT_JOINT_ELBOW_RIGHT].position.z)
         self.right_pointer: geom.Line = geom.Line.from_points(self.right_elbow, self.right_hand)
+
+
+class Hand:
+    def __init__(self, handednes: Handednes, handstate: HandState, bbox):
+        self.handednes: Handednes = handednes
+        self.handstate: HandState = handstate
+        self.bbox = bbox
 
 
 class TrackerController:

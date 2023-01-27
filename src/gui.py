@@ -40,5 +40,11 @@ class MainWindow(GuibaseExtended):
                         "bodies": self.__tracker_controller.number_tracked_bodies}
             self.set_datagrid_values(infodata)
 
+            bodyinfo = None
+            if self.__tracker_controller.number_tracked_bodies == 1:
+                print(1)
+            else:
+                print("more")
+
             if not self.__tracker_controller.camera_running:
                 break

@@ -1,3 +1,4 @@
+from __future__ import annotations
 from enum import Enum
 from numbers import Real
 
@@ -9,7 +10,7 @@ class HandState(Enum):
     UNTRACKED = 3
 
     @staticmethod
-    def from_classification_result(result: Real):
+    def from_classification_result(result: Real) -> HandState:
         if result == 0:
             return HandState.OPEN
         if result == 1:

@@ -65,9 +65,6 @@ class TrackerController:
         self.__handresult = None
 
         self.__keypoint_classifier: Union[KeyPointClassifier, None] = None
-        self.__hand_sign_ids = []
-        self.__brects = []
-        self.__keypoint_classifier_labels = ["Opened", "Closed", "Pointer"]
 
         self.__cvFpsCalc = CvFpsCalc(buffer_len=10)
 
@@ -129,23 +126,19 @@ class TrackerController:
 
         color_image = cv.flip(color_image, 1)
 
+        if self.__leftHand.handstate != HandState.UNTRACKED:
+            self.draw_info_text(color_image, self.__leftHand)
+        if self.__rightHand.handstate != HandState.UNTRACKED:
+            self.draw_info_text(color_image, self.__rightHand)
+
         if self.__handresult is not None and self.__handresult.multi_hand_landmarks:
-            for landmark, handedness, brect, hand_sign_id in \
-                    zip(self.__handresult.multi_hand_landmarks, self.__handresult.multi_handedness, self.__brects, self.__hand_sign_ids):
+            for landmark in self.__handresult.multi_hand_landmarks:
                 self.__mp_drawing.draw_landmarks(
                     color_image,
                     landmark,
                     mp.solutions.hands.HAND_CONNECTIONS,
                     mp.solutions.drawing_styles.get_default_hand_landmarks_style(),
                     mp.solutions.drawing_styles.get_default_hand_connections_style())
-                self.draw_info_text(
-                    color_image,
-                    brect,
-                    handedness,
-                    self.__keypoint_classifier_labels[hand_sign_id],
-                    "no finger gesture"
-                    # point_history_classifier_labels[most_common_fg_id[0][0]],
-                            )
 
         cv.putText(color_image, "FPS:" + str(self.fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 0), 4, cv.LINE_AA)
         cv.putText(color_image, "FPS:" + str(self.fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2, cv.LINE_AA)
@@ -157,33 +150,46 @@ class TrackerController:
         color_image_rgb = cv.cvtColor(color_image_bgr, cv.COLOR_BGR2RGB)
         color_image_rgb.flags.writeable = False
         self.__handresult = self.__hands.process(color_image_rgb)
-
-        self.__brects = []
-        self.__hand_sign_ids = []
         if self.__handresult.multi_hand_landmarks:
             for landmark, handedness in zip(self.__handresult.multi_hand_landmarks, self.__handresult.multi_handedness):
+
+                hand = Hand()
+                #print(handedness.classification[0].label)
+                if handedness.classification[0].label == "Left":
+                    hand = self.__leftHand
+
+                if handedness.classification[0].label == "Right":
+                    hand = self.__rightHand
+
                 # calcualte bbox for hand
-                self.__brects.append(calc_bounding_rect(color_image_bgr, landmark))
+                hand.bbox = calc_bounding_rect(color_image_bgr, landmark)
+
                 # create landmark list
                 landmark_list = calc_landmark_list(color_image_bgr, landmark)
                 # pre-process landmark list
                 pre_processed_landmark_list = pre_process_landmark(landmark_list)
                 # classify hand state
-                self.__hand_sign_ids.append(self.__keypoint_classifier(pre_processed_landmark_list))
+                class_result = self.__keypoint_classifier(pre_processed_landmark_list)
+                hand.handstate = HandState.from_classification_result(class_result)
+        # TODO: set hand state to UNTRACKED if it was not detected in the image
 
-    def draw_info_text(self, image, brect, handedness, hand_sign_text, finger_gesture_text):
+    def draw_info_text(self, image, hand: Hand):
+        brect = hand.bbox
+        print(brect)
+
+        # TODO: draw bbox
         cv.rectangle(image, (brect[0], brect[1]), (brect[2], brect[1] - 22),
                      (0, 0, 0), -1)
 
-        info_text = handedness.classification[0].label[0:]
-        if hand_sign_text != "":
-            info_text = info_text + ':' + hand_sign_text
+        info_text = hand.handednes.name
+        if hand.handstate != HandState.UNTRACKED:
+            info_text = info_text + ':' + hand.handstate.name
         cv.putText(image, info_text, (brect[0] + 5, brect[1] - 4),
                    cv.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1, cv.LINE_AA)
 
-        if finger_gesture_text != "":
-            cv.putText(image, "Finger Gesture:" + finger_gesture_text, (10, 60),
-                       cv.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 0), 4, cv.LINE_AA)
-            cv.putText(image, "Finger Gesture:" + finger_gesture_text, (10, 60),
-                       cv.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2,
-                       cv.LINE_AA)
+        # if finger_gesture_text != "":
+        #     cv.putText(image, "Finger Gesture:" + finger_gesture_text, (10, 60),
+        #                cv.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 0), 4, cv.LINE_AA)
+        #     cv.putText(image, "Finger Gesture:" + finger_gesture_text, (10, 60),
+        #                cv.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2,
+        #                cv.LINE_AA)

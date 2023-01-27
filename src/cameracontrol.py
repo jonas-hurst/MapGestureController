@@ -1,6 +1,7 @@
 import pykinect_azure as pykinect
 import mediapipe as mp
 import numpy as np
+import cv2 as cv
 from utils import CvFpsCalc
 from model import *
 import threading
@@ -107,7 +108,7 @@ class TrackerController:
         self.number_tracked_bodies = self.__body_frame.get_num_bodies()
 
         if not self.__handProcessThread.is_alive():
-            self.__handProcessThread = threading.Thread(target=self.process_hands, args=(color_image_bgr,))
+            self.__handProcessThread = threading.Thread(target=self.process_hands, args=(cv.flip(color_image_bgr, 1),))
             self.__handProcessThread.start()
 
         if self.visualize:
@@ -115,6 +116,8 @@ class TrackerController:
 
     def visualizeImage(self, color_image):
         self.__body_frame.draw_bodies(color_image, pykinect.K4A_CALIBRATION_TYPE_COLOR)
+
+        color_image = cv.flip(color_image, 1)
 
         if self.__handresult is not None and self.__handresult.multi_hand_landmarks:
             for landmark, handedness, brect, hand_sign_id in \

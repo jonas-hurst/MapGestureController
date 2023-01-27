@@ -35,7 +35,7 @@ class BodyResult:
 
 
 class Hand:
-    def __init__(self, handednes: Handednes, handstate: HandState, bbox):
+    def __init__(self, handednes: Handednes=Handednes.INVALID, handstate: HandState=HandState.UNTRACKED, bbox=None):
         self.handednes: Handednes = handednes
         self.handstate: HandState = handstate
         self.bbox = bbox
@@ -55,6 +55,8 @@ class TrackerController:
         self.__tracker: Union[pykinect.Tracker, None] = None
 
         self.__body_frame = None
+        self.__leftHand: Hand = Hand(Handednes.LEFT)
+        self.__rightHand: Hand = Hand(Handednes.RIGHT)
 
         self.__handProcessThread = threading.Thread()
         self.__mp_drawing = mp.solutions.drawing_utils

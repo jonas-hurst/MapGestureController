@@ -20,7 +20,6 @@ class HandState(Enum):
         return HandState.UNTRACKED
 
 
-
 class Handednes(Enum):
     LEFT = 0
     RIGHT = 1

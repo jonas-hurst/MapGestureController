@@ -11,3 +11,4 @@ class HandState(Enum):
 class Handednes(Enum):
     LEFT = 0
     RIGHT = 1
+    INVALID = 2

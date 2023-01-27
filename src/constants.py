@@ -1,4 +1,5 @@
 from enum import Enum
+from numbers import Real
 
 
 class HandState(Enum):
@@ -6,6 +7,17 @@ class HandState(Enum):
     CLOSED = 1
     POINTER = 2
     UNTRACKED = 3
+
+    @staticmethod
+    def from_classification_result(result: Real):
+        if result == 0:
+            return HandState.OPEN
+        if result == 1:
+            return HandState.CLOSED
+        if result == 2:
+            return HandState.POINTER
+        return HandState.UNTRACKED
+
 
 
 class Handednes(Enum):

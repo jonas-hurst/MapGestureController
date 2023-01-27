@@ -10,6 +10,7 @@
 import wx
 import wx.xrc
 import wx.adv
+import wx.grid
 
 ###########################################################################
 ## Class Guibase
@@ -43,6 +44,34 @@ class Guibase ( wx.Frame ):
 		self.tgl_btn_touchcontrol.Enable( False )
 
 		bSizer1.Add( self.tgl_btn_touchcontrol, 0, wx.ALL|wx.EXPAND, 5 )
+
+		self.infogrid = wx.grid.Grid( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, 0 )
+
+		# Grid
+		self.infogrid.CreateGrid( 0, 2 )
+		self.infogrid.EnableEditing( False )
+		self.infogrid.EnableGridLines( True )
+		self.infogrid.EnableDragGridSize( False )
+		self.infogrid.SetMargins( 0, 0 )
+
+		# Columns
+		self.infogrid.EnableDragColMove( False )
+		self.infogrid.EnableDragColSize( False )
+		self.infogrid.SetColLabelValue( 0, u"key" )
+		self.infogrid.SetColLabelValue( 1, u"value" )
+		self.infogrid.SetColLabelAlignment( wx.ALIGN_CENTER, wx.ALIGN_CENTER )
+
+		# Rows
+		self.infogrid.AutoSizeRows()
+		self.infogrid.EnableDragRowSize( False )
+		self.infogrid.SetRowLabelSize( 0 )
+		self.infogrid.SetRowLabelAlignment( wx.ALIGN_CENTER, wx.ALIGN_CENTER )
+
+		# Label Appearance
+
+		# Cell Defaults
+		self.infogrid.SetDefaultCellAlignment( wx.ALIGN_LEFT, wx.ALIGN_TOP )
+		bSizer1.Add( self.infogrid, 1, wx.ALL|wx.EXPAND, 5 )
 
 
 		fgSizer1.Add( bSizer1, 1, wx.EXPAND, 5 )

@@ -1,6 +1,6 @@
 from guibaseExtended import GuibaseExtended
 import threading
-from mpTest2 import TrackerController
+from cameracontrol import TrackerController
 
 
 class MainWindow(GuibaseExtended):

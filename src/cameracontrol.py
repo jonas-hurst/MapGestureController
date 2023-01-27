@@ -6,6 +6,13 @@ from model import *
 import threading
 from typing import Union
 import geom
+from enum import Enum
+
+
+class HandState(Enum):
+    OPEN = 0
+    CLOSED = 1
+    POINTER = 2
 
 
 class BodyResult:

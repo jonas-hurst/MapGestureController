@@ -11,10 +11,10 @@ from constants import HandState
 
 
 class BodyResult:
-    def __init__(self, body: pykinect.Body, left_hand_state: str, right_hand_state: str):
+    def __init__(self, body: pykinect.Body, left_hand_state: HandState, right_hand_state: HandState):
         self.body_center = 0
 
-        self.left_hand_state: str = left_hand_state
+        self.left_hand_state: HandState = left_hand_state
         self.left_hand: geom.Point3D = geom.Point3D(body.joints[pykinect.K4ABT_JOINT_HAND_LEFT].position.x,
                                                     body.joints[pykinect.K4ABT_JOINT_HAND_LEFT].position.y,
                                                     body.joints[pykinect.K4ABT_JOINT_HAND_LEFT].position.z)
@@ -23,7 +23,7 @@ class BodyResult:
                                                      body.joints[pykinect.K4ABT_JOINT_ELBOW_LEFT].position.z)
         self.left_pointer: geom.Line = geom.Line.from_points(self.left_elbow, self.left_hand)
 
-        self.right_hand_state = right_hand_state
+        self.right_hand_state: HandState = right_hand_state
         self.right_hand: geom.Point3D = geom.Point3D(body.joints[pykinect.K4ABT_JOINT_HAND_RIGHT].position.x,
                                                      body.joints[pykinect.K4ABT_JOINT_HAND_RIGHT].position.y,
                                                      body.joints[pykinect.K4ABT_JOINT_HAND_RIGHT].position.z)

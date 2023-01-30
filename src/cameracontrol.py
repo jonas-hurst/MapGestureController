@@ -150,14 +150,18 @@ class TrackerController:
         color_image_rgb = cv.cvtColor(color_image_bgr, cv.COLOR_BGR2RGB)
         color_image_rgb.flags.writeable = False
         self.__handresult = self.__hands.process(color_image_rgb)
+        right_hand_detected = False
+        left_hand_detected = False
         if self.__handresult.multi_hand_landmarks:
             for landmark, handedness in zip(self.__handresult.multi_hand_landmarks, self.__handresult.multi_handedness):
 
                 hand = Hand()
                 if handedness.classification[0].label == "Left":
+                    left_hand_detected = True
                     hand = self.__leftHand
 
                 if handedness.classification[0].label == "Right":
+                    right_hand_detected = True
                     hand = self.__rightHand
 
                 # calcualte bbox for hand
@@ -170,7 +174,11 @@ class TrackerController:
                 # classify hand state
                 class_result = self.__keypoint_classifier(pre_processed_landmark_list)
                 hand.handstate = HandState.from_classification_result(class_result)
-        # TODO: set hand state to UNTRACKED if it was not detected in the image
+
+        if not left_hand_detected:
+            self.__leftHand.handstate = HandState.UNTRACKED
+        if not right_hand_detected:
+            self.__rightHand.handstate = HandState.UNTRACKED
 
     def draw_info_text(self, image, hand: Hand):
         brect = hand.bbox

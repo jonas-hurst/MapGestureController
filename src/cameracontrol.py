@@ -99,7 +99,7 @@ class TrackerController:
         self.__hands.close()
         self.__keypoint_classifier = None
 
-    def captureFrame(self):
+    def getBodyCaptureData(self):
         self.fps = self.__cvFpsCalc.get()
 
         capture = self.__device.update()

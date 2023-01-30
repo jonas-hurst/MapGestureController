@@ -1,6 +1,6 @@
 from guibaseExtended import GuibaseExtended
 import threading
-from cameracontrol import TrackerController
+from cameracontrol import *
 
 
 class MainWindow(GuibaseExtended):
@@ -33,7 +33,7 @@ class MainWindow(GuibaseExtended):
 
     def cameraloop(self):
         while True:
-            self.__tracker_controller.captureFrame()
+            bodyresult: BodyResult = self.__tracker_controller.getBodyCaptureData()
             self.set_bitmap(self.__tracker_controller.color_image_bgr)
 
             infodata = {"fps": self.__tracker_controller.fps,

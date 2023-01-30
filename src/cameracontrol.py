@@ -154,7 +154,6 @@ class TrackerController:
             for landmark, handedness in zip(self.__handresult.multi_hand_landmarks, self.__handresult.multi_handedness):
 
                 hand = Hand()
-                #print(handedness.classification[0].label)
                 if handedness.classification[0].label == "Left":
                     hand = self.__leftHand
 

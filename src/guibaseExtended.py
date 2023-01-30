@@ -6,6 +6,11 @@ from guibase import Guibase
 
 
 class GuibaseExtended(Guibase):
+    """
+    Class to extend Guibase (generated from wxFormBuilder) with custom GUI functionality.
+    This class should contain all custom GUI code.
+    This class can then be derived, where then interactino logic resides.
+    """
     def __init__(self, parent):
         Guibase.__init__(self, parent)
 
@@ -28,6 +33,11 @@ class GuibaseExtended(Guibase):
         wx.Exit()
 
     def set_datagrid_values(self, tabledata: dict):
+        """
+        Populates the datagrid with Key-Value pairs
+        :param tabledata: Data to be displayed in Datagrid. Must be dict.
+        :return: None
+        """
         if self.infogrid.NumberRows != len(tabledata):
             self.infogrid.AppendRows(len(tabledata), False)
 
@@ -38,6 +48,11 @@ class GuibaseExtended(Guibase):
             rowcount += 1
 
     def set_bitmap(self, frame):
+        """
+        Method to set the image on screen.
+        :param frame: 2D numpy array containing the image
+        :return: None
+        """
         frame_small = resize(frame.copy(), (854, 480))
         frame_small_rgb = cvtColor(frame_small, COLOR_BGR2RGB)
         self.bmp.CopyFromBuffer(frame_small_rgb)

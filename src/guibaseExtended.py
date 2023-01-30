@@ -19,6 +19,10 @@ class GuibaseExtended(Guibase):
         btn_value = self.tgl_btn_start_camera.Value
         self.tgl_btn_show_feed.Enable(btn_value)
         self.tgl_btn_touchcontrol.Enable(btn_value)
+        if btn_value:
+            self.tgl_btn_start_camera.SetLabelText("Stop Camera")
+        else:
+            self.tgl_btn_start_camera.SetLabelText("Start Camera")
 
     def on_close(self, event):
         wx.Exit()

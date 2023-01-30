@@ -184,11 +184,6 @@ class TrackerController:
 
     def draw_info_text(self, image, hand: Hand):
         brect = hand.bbox
-        print(brect)
-
-        # TODO: draw bbox
-        cv.rectangle(image, (brect[0], brect[1]), (brect[2], brect[1] - 22),
-                     (0, 0, 0), -1)
 
         info_text = hand.handednes.name
         if hand.handstate != HandState.UNTRACKED:

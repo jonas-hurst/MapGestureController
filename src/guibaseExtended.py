@@ -30,7 +30,7 @@ class GuibaseExtended(Guibase):
             self.tgl_btn_start_camera.SetLabelText("Start Camera")
 
     def on_close(self, event):
-        wx.Exit()
+        Guibase.on_close(self, event)
 
     def set_datagrid_values(self, tabledata: dict):
         """

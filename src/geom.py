@@ -137,3 +137,66 @@ class Line:
         supp = point1.get_pointvector()
         direc = Vector3D.from_points(point1, point2)
         return Line(supp, direc)
+
+
+class Plane3D:
+    """
+    Class to represent a plane in 3D-space
+    """
+
+    def __init__(self, a: Real, b: Real, c: Real, d: Real):
+        """
+        Initializes a Plane of type: a*x1 b b*x2 + c*x3 = d
+        :param a: Parameter a
+        :param b: Parameter b
+        :param c: Parameter c
+        :param d: Parameter d
+        """
+        self.a, self.b, self.c, self.d = a, b, c, d
+
+    def __str__(self) -> str:
+        return "Plane:\n" \
+               f"{self.a} * x1 + {self.b} * x2 + {self.c} * x3 = {self.d}"
+
+    def intersect_line(self, line: Line) -> Point3D:
+        """
+        Method to intersect the plane with a line
+        :param line: The line to intersect the plane
+        :return: Point at which the intersection occurs
+        """
+        if Vector3D.check_orthogonal(Vector3D(self.a, self.b, self.c), line.directional_vector):
+            raise ParallelError("Plane and Line are parallel. An intersection point is therefore not possible")
+
+        # Zähler
+        numerator = self.d - \
+                    self.a * line.support_vector.x_dir - \
+                    self.b * line.support_vector.y_dir - \
+                    self.c * line.support_vector.z_dir
+
+        # Nenner
+        denominator = self.a * line.directional_vector.x_dir + \
+                      self.b * line.directional_vector.y_dir + \
+                      self.c * line.directional_vector.z_dir
+
+        r_val = numerator / denominator
+        int_point = line.support_vector.coords + r_val * line.directional_vector.coords
+        return Point3D(int_point[0], int_point[1], int_point[2])
+
+    @staticmethod
+    def from_vectors(support_vector: Vector3D, dir_vector_1: Vector3D, dir_vector_2: Vector3D) -> Plane3D:
+        """
+        Construct a plane from a suppor vector and two directional vectors.
+        Directional vectors must not be parallel
+        :param support_vector: Support vector for the plane
+        :param dir_vector_1: First directinoal vector
+        :param dir_vector_2: Second directional vector
+        :return: The constructed plane
+        """
+        # Check if directional vectors are parallel -> impossible to construct plane
+        if Vector3D.check_parallel(dir_vector_1, dir_vector_2):
+            raise ParallelError("Directional vectors dir_vector_1 and dir_vector_2 must not be parallel")
+
+        normal = np.cross(dir_vector_1.coords, dir_vector_2.coords)
+        a, b, c = normal
+        d = a * support_vector.x_dir + b * support_vector.y_dir + c * support_vector.z_dir
+        return Plane3D(a, b, c, d)

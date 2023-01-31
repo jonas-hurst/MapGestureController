@@ -158,6 +158,16 @@ class Plane3D:
         return "Plane:\n" \
                f"{self.a} * x1 + {self.b} * x2 + {self.c} * x3 = {self.d}"
 
+    def contains_point(self, pnt: Point3D, epsilon: float = 0.0001) -> bool:
+        """
+        Method to check if a point pnt is part of the plane
+        :param pnt: The point
+        :param epsilon: epsilon value to account for float rounding errors
+        :return: bool value indicating if point is part of the plane
+        """
+        test_val = self.a*pnt.x + self.b*pnt.y + self.c*pnt.z
+        return abs(test_val - self.d) < epsilon
+
     def intersect_line(self, line: Line) -> Point3D:
         """
         Method to intersect the plane with a line

@@ -125,6 +125,7 @@ class TrackerController:
             self.visualizeImage(color_image_bgr)
 
         if self.__body_frame.get_num_bodies() > 0:
+            # TODO: Transform coordinates: 6° offset in angle in depth camera
             result = BodyResult(self.__body_frame.get_body(0), self.__leftHand.handstate, self.__rightHand.handstate)
             return result
         else:

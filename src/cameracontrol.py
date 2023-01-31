@@ -42,6 +42,9 @@ class Hand:
 
 
 class TrackerController:
+    """
+    Class to perform Processing of Azure Kinect Imagery
+    """
     def __init__(self, visualize=True):
         pykinect.initialize_libraries(track_body=True)
 

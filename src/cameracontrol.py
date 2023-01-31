@@ -121,8 +121,11 @@ class TrackerController:
         if self.visualize:
             self.visualizeImage(color_image_bgr)
 
-        result = BodyResult(self.__body_frame.get_body(0), self.__leftHand.handstate, self.__rightHand.handstate)
-        return result
+        if self.__body_frame.get_num_bodies() > 0:
+            result = BodyResult(self.__body_frame.get_body(0), self.__leftHand.handstate, self.__rightHand.handstate)
+            return result
+        else:
+            return None
 
     def visualizeImage(self, color_image):
         self.__body_frame.draw_bodies(color_image, pykinect.K4A_CALIBRATION_TYPE_COLOR)

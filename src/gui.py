@@ -37,9 +37,11 @@ class MainWindow(GuibaseExtended):
             self.set_bitmap(self.__tracker_controller.color_image_bgr)
 
             infodata = {"fps": self.__tracker_controller.fps,
-                        "bodies": self.__tracker_controller.number_tracked_bodies,
-                        "left": bodyresult.left_hand_state,
-                        "right": bodyresult.right_hand_state}
+                        "bodies": self.__tracker_controller.number_tracked_bodies}
+
+            if bodyresult is not None:
+                infodata["left"] = bodyresult.left_hand_state
+                infodata["right"] = bodyresult.right_hand_state
             self.set_datagrid_values(infodata)
 
             if not self.__tracker_controller.camera_running:

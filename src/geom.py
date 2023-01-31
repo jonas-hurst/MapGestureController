@@ -75,7 +75,6 @@ class Vector3D:
         """
 
         value = abs(np.dot(v1.coords, v2.coords) / (np.linalg.norm(v1.coords)*np.linalg.norm(v2.coords)))
-        print(value)
         return value > 1-epsilon
 
     @staticmethod
@@ -89,7 +88,6 @@ class Vector3D:
         """
 
         value = abs(np.dot(v1.coords, v2.coords) / (np.linalg.norm(v1.coords) * np.linalg.norm(v2.coords)))
-        print(value)
         return value < epsilon
 
     @staticmethod

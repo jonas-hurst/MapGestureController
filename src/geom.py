@@ -65,6 +65,34 @@ class Vector3D:
         return "Vector3D: " + self.coords.__str__()
 
     @staticmethod
+    def check_parallel(v1: Vector3D, v2: Vector3D, epsilon: float = 0.0001) -> bool:
+        """
+        Method to check if two vectors are parllel (or anti-parallel)
+        :param v1: The first vector
+        :param v2: The second vector
+        :param epsilon: epsilon value to account for float rounding errors
+        :return: bool value indicating if vectors are parallel
+        """
+
+        value = abs(np.dot(v1.coords, v2.coords) / (np.linalg.norm(v1.coords)*np.linalg.norm(v2.coords)))
+        print(value)
+        return value > 1-epsilon
+
+    @staticmethod
+    def check_orthogonal(v1: Vector3D, v2: Vector3D, epsilon: float = 0.0001) -> bool:
+        """
+        Method to check if two vectors are orthogonal
+        :param v1: The first vector
+        :param v2: The second vector
+        :param epsilon: episilon value to account for float rounding numbers
+        :return: bool value indicating if vectors are orthogonal
+        """
+
+        value = abs(np.dot(v1.coords, v2.coords) / (np.linalg.norm(v1.coords) * np.linalg.norm(v2.coords)))
+        print(value)
+        return value < epsilon
+
+    @staticmethod
     def from_points(point1: Point3D, point2: Point3D) -> Vector3D:
         """
         Calculates the vector between two points

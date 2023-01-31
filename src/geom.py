@@ -6,6 +6,13 @@ from numbers import Real
 import numpy as np
 
 
+class ParallelError(Exception):
+    """
+    Exception to be raised if a geometric operation cannot be executed due to parallel vectors.
+    """
+    pass
+
+
 class Point3D:
     """
     Represents a point in 3D space

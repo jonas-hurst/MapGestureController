@@ -48,6 +48,9 @@ class Vector3D:
     """
     def __init__(self, x_dir: Real, y_dir: Real, z_dir: Real):
         self.coords: np.array = np.array([x_dir, y_dir, z_dir])
+        self.x_dir = self.coords[0]
+        self.y_dir = self.coords[1]
+        self.z_dir = self.coords[2]
 
     def __sub__(self, other: Vector3D) -> Vector3D:
         """

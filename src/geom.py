@@ -71,6 +71,13 @@ class Vector3D:
     def __str__(self):
         return "Vector3D: " + self.coords.__str__()
 
+    def get_magnitude(self) -> float:
+        """
+        Calculates the magnitude of the vector, using euclidian norm
+        :return: The magnitude
+        """
+        return np.linalg.norm(self.coords)
+
     @staticmethod
     def check_parallel(v1: Vector3D, v2: Vector3D, epsilon: float = 0.0001) -> bool:
         """

@@ -1,11 +1,18 @@
 from guibaseExtended import GuibaseExtended
 import threading
 from cameracontrol import *
+from screen import Screen
+import geom
 
 
 class MainWindow(GuibaseExtended):
     def __init__(self, parent):
         GuibaseExtended.__init__(self, parent)
+
+        self.screen = Screen(0,
+                             geom.Point3D(-1100, -1150, -340),
+                             geom.Point3D(1100, 130, -340),
+                             1920, 1080)
 
         self.__tracker_controller = TrackerController(visualize=True)
 
@@ -42,6 +49,11 @@ class MainWindow(GuibaseExtended):
             if bodyresult is not None:
                 infodata["left"] = bodyresult.left_hand_state
                 infodata["right"] = bodyresult.right_hand_state
+                pnt = self.screen.screen_plain.intersect_line(bodyresult.right_pointer)
+                try:
+                    print(self.screen.coords_to_px(pnt))
+                except ValueError:
+                    print("no intersect")
             self.set_datagrid_values(infodata)
 
             if not self.__tracker_controller.camera_running:

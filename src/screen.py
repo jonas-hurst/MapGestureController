@@ -48,15 +48,12 @@ class Screen:
         """
 
         if not self.lower_left_corner.x <= point.x <= self.upper_right_corner.x:
-            print("check1 False")
             return False
 
         if not self.lower_left_corner.y <= point.y <= self.upper_right_corner.y:
-            print("check2 False")
             return False
 
         if not self.lower_left_corner.z <= point.z <= self.upper_right_corner.z:
-            print("check3 False")
             return False
 
         return True

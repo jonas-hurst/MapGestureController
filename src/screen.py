@@ -5,8 +5,11 @@ from numbers import Real
 class Screen:
     def __init__(self, lower_left_corner: Point3D, upper_right_corner: Point3D, px_width: int, px_height: int):
 
-        # TODO: Check if lower and upper corner are actually lower and upper left/right
-        # TODO Check if screen points  are directly upwards
+        # Check if lower and upper corner are actually lower and upper left/right
+        if (lower_left_corner.x > upper_right_corner.x or
+                lower_left_corner.y > upper_right_corner.y or
+                lower_left_corner.z > upper_right_corner.z):
+            raise ValueError("Lower and upper corner values are not actually lower and upper corner")
 
         self.lower_left_corner: Point3D = lower_left_corner
         self.upper_right_corner: Point3D = upper_right_corner

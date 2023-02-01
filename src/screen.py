@@ -3,7 +3,7 @@ from numbers import Real
 
 
 class Screen:
-    def __init__(self, lower_left_corner: Point3D, upper_right_corner: Point3D, px_width: int, px_height: int):
+    def __init__(self, screen_id: int, lower_left_corner: Point3D, upper_right_corner: Point3D, px_width: int, px_height: int):
         """
         Initializes a new Screen object (e.g. TV screen or projection screen)
         :param lower_left_corner: Lower left corner of the screen
@@ -17,6 +17,8 @@ class Screen:
                 lower_left_corner.y > upper_right_corner.y or
                 lower_left_corner.z > upper_right_corner.z):
             raise ValueError("Lower and upper corner values are not actually lower and upper corner")
+
+        self.screen_id: int = screen_id
 
         self.lower_left_corner: Point3D = lower_left_corner
         self.upper_right_corner: Point3D = upper_right_corner
@@ -71,7 +73,8 @@ class Screen:
 
 
 if __name__ == "__main__":
-    s = Screen(Point3D(-10, -2, 1),
+    s = Screen(1,
+               Point3D(-10, -2, 1),
                Point3D(-10,  2, 3),
                1920, 1080)
     p = Point3D(-10, 1, 2)

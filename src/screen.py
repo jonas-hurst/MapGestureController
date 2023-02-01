@@ -28,6 +28,10 @@ class Screen:
                                                  Vector3D(0, -1, 0)   # Third vector just points upwards
                                                  )
 
+        helper_vector = Vector3D.from_points(lower_left_corner, upper_right_corner)
+        self.screen_width = Vector3D(helper_vector.x_dir, 0, helper_vector.z_dir).get_magnitude()
+        self.screen_height = abs(self.upper_right_corner.y - self.lower_left_corner.y)
+
         self.px_width = px_width
         self.px_height = px_height
 
@@ -66,6 +70,23 @@ class Screen:
             return False
 
         return True
+
+    def coords_to_px(self, point: Point3D):
+        """
+        Method to convert a point on screen to its pixel value
+        :param point: The point to convert to pixel values
+        :return: Pixel values for point
+        """
+
+        # Check if point is on screen
+        if not self.contains_point(point):
+            raise ValueError("Point not on screen")
+
+        point_vector = Vector3D.from_points(self.lower_left_corner, point)
+        height_px = point_vector.y_dir * (self.px_height / self.screen_height)
+        width_px = Vector3D(point_vector.x_dir, 0, point_vector.z_dir).get_magnitude() * (self.px_width / self.screen_width)
+        return int(width_px), int(height_px)
+
 
     def draw_point(self):
         #TODO: Draw intersection point on screen

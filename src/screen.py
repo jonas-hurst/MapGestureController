@@ -95,8 +95,9 @@ class Screen:
 
 if __name__ == "__main__":
     s = Screen(1,
-               Point3D(-10, -2, 1),
-               Point3D(-10,  2, 3),
+               Point3D(-1.5, -1,   -0.5),
+               Point3D( 1.5,  0.5, -0.5),
                1920, 1080)
-    p = Point3D(-10, 1, 2)
-    print(s.contains_point(p))
+    p = Point3D(-1.5, 0.5, -0.5)
+
+    print(s.coords_to_px(p))

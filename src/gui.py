@@ -3,6 +3,7 @@ import threading
 from cameracontrol import *
 from screen import Screen
 import geom
+from websocketserver import Server
 
 
 class MainWindow(GuibaseExtended):
@@ -39,6 +40,8 @@ class MainWindow(GuibaseExtended):
         self.__tracker_controller.stopDevice()
 
     def cameraloop(self):
+        server = Server()
+        server.open_server()
         while True:
             bodyresult: BodyResult = self.__tracker_controller.getBodyCaptureData()
             self.set_bitmap(self.__tracker_controller.color_image_bgr)
@@ -52,9 +55,11 @@ class MainWindow(GuibaseExtended):
                 pnt = self.screen.screen_plain.intersect_line(bodyresult.right_pointer)
                 try:
                     print(self.screen.coords_to_px(pnt))
+                    server.send_json({"hi": "hi"})
                 except ValueError:
                     print("no intersect")
             self.set_datagrid_values(infodata)
 
             if not self.__tracker_controller.camera_running:
                 break
+        #server.close_server()

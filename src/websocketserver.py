@@ -1,3 +1,4 @@
+import json
 import threading
 from websocket_server import WebsocketServer
 
@@ -19,8 +20,8 @@ class Server(object):
     def close_server(self):
         self.__server.shutdown_gracefully()
 
-    def send_json(self, msg: dict):
-        self.__server.send_message_to_all(str(msg))
+    def send_json(self, message: dict):
+        self.__server.send_message_to_all(json.dumps(message))
 
 def _new_client(client, server):
     print("new client")

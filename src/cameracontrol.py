@@ -160,11 +160,6 @@ class TrackerController:
                     mp.solutions.drawing_styles.get_default_hand_landmarks_style(),
                     mp.solutions.drawing_styles.get_default_hand_connections_style())
 
-        cv.putText(color_image, "FPS:" + str(self.fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 0), 4,
-                   cv.LINE_AA)
-        cv.putText(color_image, "FPS:" + str(self.fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2,
-                   cv.LINE_AA)
-
         self.color_image_bgr = color_image
         # cv.imshow("color image", color_image)
 

@@ -71,11 +71,11 @@ class Screen:
 
         return True
 
-    def coords_to_px(self, point: Point3D):
+    def coords_to_px(self, point: Point3D) -> (int, int):
         """
         Method to convert a point on screen to its pixel value
         :param point: The point to convert to pixel values
-        :return: Pixel values for point
+        :return: Pixel values for point. Length 2 tuple, two ints. First value is x, second one is y
         """
 
         # Check if point is on screen

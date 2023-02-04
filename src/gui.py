@@ -42,6 +42,24 @@ class MainWindow(GuibaseExtended):
     def cameraloop(self):
         server = Server()
         server.open_server()
+
+        message = {
+            "right": {
+                "present": False,
+                "position": {
+                    "x": 0,
+                    "y": 0
+                }
+            },
+            "left": {
+                "present": False,
+                "position": {
+                    "x": 0,
+                    "y": 0
+                }
+            }
+        }
+
         while True:
             bodyresult: BodyResult = self.__tracker_controller.getBodyCaptureData()
             self.set_bitmap(self.__tracker_controller.color_image_bgr)
@@ -67,12 +85,20 @@ class MainWindow(GuibaseExtended):
                 # If line-plain intersection point is on screen, try-block is executed
                 # If it is not, except block executes.
                 try:
-                    print(self.screen.coords_to_px(pnt))
-                    server.send_json({"hi": "hi"})
+                    # print(self.screen.coords_to_px(pnt))
+                    x, y = self.screen.coords_to_px(pnt)
+
+                    message["right"]["present"] = True
+                    message["right"]["position"]["x"] = x
+                    message["right"]["position"]["y"] = y
                 except ValueError:
-                    print("no intersect")
+                    message["right"]["present"] = False
+
+                server.send_json(message)
+
             self.set_datagrid_values(infodata)
 
             if not self.__tracker_controller.camera_running:
                 break
-        #server.close_server()
+
+        server.close_server()

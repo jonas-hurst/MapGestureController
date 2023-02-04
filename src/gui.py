@@ -55,7 +55,10 @@ class MainWindow(GuibaseExtended):
 
                 # Calculate the point in 3D-space wehre pointer-line and infinite screen-plain intersect
                 # A check whether this point is on screen occurs later
-                pnt = self.screen.screen_plain.intersect_line(bodyresult.right_pointer)
+                try:
+                    pnt = self.screen.screen_plain.intersect_line(bodyresult.right_pointer)
+                except geom.ParallelError:
+                    continue
 
                 # TODO: Handle ParallelError exception: Behavior if line and plain are parallel
 

@@ -52,7 +52,15 @@ class MainWindow(GuibaseExtended):
             if bodyresult is not None:
                 infodata["left"] = bodyresult.left_hand_state
                 infodata["right"] = bodyresult.right_hand_state
+
+                # Calculate the point in 3D-space wehre pointer-line and infinite screen-plain intersect
+                # A check whether this point is on screen occurs later
                 pnt = self.screen.screen_plain.intersect_line(bodyresult.right_pointer)
+
+                # TODO: Handle ParallelError exception: Behavior if line and plain are parallel
+
+                # If line-plain intersection point is on screen, try-block is executed
+                # If it is not, except block executes.
                 try:
                     print(self.screen.coords_to_px(pnt))
                     server.send_json({"hi": "hi"})

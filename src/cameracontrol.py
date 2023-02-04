@@ -2,7 +2,8 @@ import pykinect_azure as pykinect
 import mediapipe as mp
 import numpy as np
 import cv2 as cv
-from utils import CvFpsCalc
+from utils import CvFpsCalc, OneEuroFilter
+from time import time
 from model import *
 import threading
 from typing import Union
@@ -67,6 +68,16 @@ class TrackerController:
         self.__device: Union[pykinect.Device, None] = None
         self.__tracker: Union[pykinect.Tracker, None] = None
 
+        # Initialize list of 1-Euro-filters: Three filters per joint, one for each coordinate
+        self.__filters_initialized = False
+        self.__one_euro_filters: list[list[OneEuroFilter]] = []
+        for _ in range(pykinect.K4ABT_JOINT_COUNT):
+            joint_filters: list[OneEuroFilter] = []
+            for __ in range(3):
+                one_eur_filter = OneEuroFilter(0, 0)
+                joint_filters.append(one_eur_filter)
+            self.__one_euro_filters.append(joint_filters)
+
         self.__body_frame = None
         self.__leftHand: Hand = Hand(Handednes.LEFT)
         self.__rightHand: Hand = Hand(Handednes.RIGHT)
@@ -117,6 +128,8 @@ class TrackerController:
 
         capture = self.__device.update()
 
+        capture_time = time()
+
         # Get the color image from the capture
         ret, color_image_bgr = capture.get_color_image()
 
@@ -135,11 +148,40 @@ class TrackerController:
             self.visualizeImage(color_image_bgr)
 
         if self.__body_frame.get_num_bodies() > 0:
+
+            # on first body detected: initialize filters
+            if not self.__filters_initialized:
+                self.initialize_filters(self.__body_frame.get_body(0), capture_time)
+                self.__filters_initialized = True
+                return None
+
+            # Filter coordinates
+            self.filter_body_coordinates(self.__body_frame.get_body(0), capture_time)
+
+            # Rotate coordinates
             # TODO: Transform coordinates: 6° offset in angle in depth camera
+
             result = BodyResult(self.__body_frame.get_body(0), self.__leftHand.handstate, self.__rightHand.handstate)
             return result
         else:
             return None
+
+    def initialize_filters(self, body: pykinect.Body, t0: float):
+        for jointfilterset, joint in zip(self.__one_euro_filters, body.joints):
+            jointfilterset[0].x_prev = joint.position.x
+            jointfilterset[0].t_prev = t0
+
+            jointfilterset[1].x_prev = joint.position.y
+            jointfilterset[1].t_prev = t0
+
+            jointfilterset[2].x_prev = joint.position.z
+            jointfilterset[2].t_prev = t0
+
+    def filter_body_coordinates(self, body:pykinect.Body, t: float):
+        for jointfilterset, joint in zip(self.__one_euro_filters, body.joints):
+            joint.position.x = jointfilterset[0](t, joint.position.x)
+            joint.position.y = jointfilterset[1](t, joint.position.y)
+            joint.position.z = jointfilterset[2](t, joint.position.z)
 
     def visualizeImage(self, color_image):
         self.__body_frame.draw_bodies(color_image, pykinect.K4A_CALIBRATION_TYPE_COLOR)

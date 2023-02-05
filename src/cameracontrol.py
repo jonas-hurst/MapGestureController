@@ -124,6 +124,10 @@ class TrackerController:
         self.__keypoint_classifier = None
 
     def getBodyCaptureData(self):
+        """
+        Method to be performed each frame
+        :return: Result of body tracking, derived from hand gesture and skeleton
+        """
         self.fps = self.__cvFpsCalc.get()
 
         capture = self.__device.update()
@@ -184,6 +188,11 @@ class TrackerController:
             joint.position.z = jointfilterset[2](t, joint.position.z)
 
     def visualizeImage(self, color_image):
+        """
+        Generaet a cv2 image that can be displayed
+        :param color_image: The color image taken by the camera (BGR color format), as np.ndarray
+        :return: nothing
+        """
         self.__body_frame.draw_bodies(color_image, pykinect.K4A_CALIBRATION_TYPE_COLOR)
 
         color_image = cv.flip(color_image, 1)
@@ -211,6 +220,12 @@ class TrackerController:
         # cv.imshow("color image", color_image)
 
     def process_hands(self, color_image_bgr):
+        """
+        Method to process color image (BGR color format).
+        Mediapipe detects hand and landmarks, different model classifys hand state based on landmarks.
+        :param color_image_bgr: the image from camera
+        :return: nothing
+        """
         color_image_rgb = cv.cvtColor(color_image_bgr, cv.COLOR_BGR2RGB)
         color_image_rgb.flags.writeable = False
         self.__handresult = self.__hands.process(color_image_rgb)
@@ -245,6 +260,12 @@ class TrackerController:
             self.__rightHand.handstate = HandState.UNTRACKED
 
     def draw_info_text(self, image, hand: Hand):
+        """
+        Add info text to image for visualization.
+        :param image: Color image
+        :param hand: Hand Inforrmation
+        :return: nothing
+        """
         brect = hand.bbox
 
         info_text = hand.handednes.name

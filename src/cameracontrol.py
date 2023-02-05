@@ -181,6 +181,12 @@ class TrackerController:
             jointfilterset[2].x_prev = joint.position.z
             jointfilterset[2].t_prev = t0
 
+    def tune_filters(self, min_cutoff: float, beta: float):
+        for jointfilterset in self.__one_euro_filters:
+            for coord_filter in jointfilterset:
+                coord_filter.min_cutoff = min_cutoff
+                coord_filter.beta = beta
+
     def filter_body_coordinates(self, body:pykinect.Body, t: float):
         for jointfilterset, joint in zip(self.__one_euro_filters, body.joints):
             joint.position.x = jointfilterset[0](t, joint.position.x)

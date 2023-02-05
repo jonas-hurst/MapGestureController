@@ -1,5 +1,4 @@
 from guibaseExtended import GuibaseExtended, CalibrateDialogExtended
-import threading
 from cameracontrol import *
 from screen import Screen
 import geom
@@ -127,7 +126,7 @@ class CalibrateDialogWindow(CalibrateDialogExtended):
     def on_okay(self, event):
         self.Close()
 
-    def on_slider_changed( self, event ):
+    def on_slider_changed(self, event):
         beta_value = self.slider_beta.GetValue() / 100
         mincutoff_value = self.slider_mincutoff.GetValue() / 100000
         self.tuneunction(min_cutoff=mincutoff_value, beta=beta_value)

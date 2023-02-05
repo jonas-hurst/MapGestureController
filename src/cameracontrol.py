@@ -42,7 +42,7 @@ class BodyResult:
         self.right_elbow: geom.Point3D = geom.Point3D(body.joints[pykinect.K4ABT_JOINT_ELBOW_RIGHT].position.x,
                                                       body.joints[pykinect.K4ABT_JOINT_ELBOW_RIGHT].position.y,
                                                       body.joints[pykinect.K4ABT_JOINT_ELBOW_RIGHT].position.z)
-        self.right_pointer: geom.Line = geom.Line.from_points(self.nose, self.right_hand_tip)
+        self.right_pointer: geom.Line = geom.Line.from_points(self.nose, self.right_hand)
 
 
 class Hand:
@@ -65,6 +65,10 @@ class TrackerController:
         self.color_image_bgr: Union[np.ndarray, None] = None
         self.number_tracked_bodies = 0
 
+        # for 1Euro filter
+        self.minCutoff = 1
+        self.beta = 0
+
         self.__device: Union[pykinect.Device, None] = None
         self.__tracker: Union[pykinect.Tracker, None] = None
 
@@ -74,7 +78,7 @@ class TrackerController:
         for _ in range(pykinect.K4ABT_JOINT_COUNT):
             joint_filters: list[OneEuroFilter] = []
             for __ in range(3):
-                one_eur_filter = OneEuroFilter(0, 0)
+                one_eur_filter = OneEuroFilter(0, 0, min_cutoff=self.minCutoff, beta=self.beta)
                 joint_filters.append(one_eur_filter)
             self.__one_euro_filters.append(joint_filters)
 
@@ -160,7 +164,10 @@ class TrackerController:
                 return None
 
             # Filter coordinates
+            # todo: check if effective: not here
+            print("before", self.__body_frame.get_body(0).joints[pykinect.K4ABT_JOINT_HAND_RIGHT].position.x)
             self.filter_body_coordinates(self.__body_frame.get_body(0), capture_time)
+            print("after", self.__body_frame.get_body(0).joints[pykinect.K4ABT_JOINT_HAND_RIGHT].position.x)
 
             # Rotate coordinates
             # TODO: Transform coordinates: 6° offset in angle in depth camera
@@ -182,12 +189,16 @@ class TrackerController:
             jointfilterset[2].t_prev = t0
 
     def tune_filters(self, min_cutoff: float, beta: float):
+        self.minCutoff = min_cutoff
+        self.beta = beta
+
         for jointfilterset in self.__one_euro_filters:
             for coord_filter in jointfilterset:
                 coord_filter.min_cutoff = min_cutoff
                 coord_filter.beta = beta
 
     def filter_body_coordinates(self, body:pykinect.Body, t: float):
+        # Todo: Check if this takes effect: seems to take effect here
         for jointfilterset, joint in zip(self.__one_euro_filters, body.joints):
             joint.position.x = jointfilterset[0](t, joint.position.x)
             joint.position.y = jointfilterset[1](t, joint.position.y)

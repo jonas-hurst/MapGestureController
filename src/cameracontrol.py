@@ -163,16 +163,15 @@ class TrackerController:
                 self.__filters_initialized = True
                 return None
 
+            body: pykinect.Body = self.__body_frame.get_body(0)
+
             # Filter coordinates
-            # todo: check if effective: not here
-            print("before", self.__body_frame.get_body(0).joints[pykinect.K4ABT_JOINT_HAND_RIGHT].position.x)
-            self.filter_body_coordinates(self.__body_frame.get_body(0), capture_time)
-            print("after", self.__body_frame.get_body(0).joints[pykinect.K4ABT_JOINT_HAND_RIGHT].position.x)
+            self.filter_body_coordinates(body, capture_time)
 
             # Rotate coordinates
             # TODO: Transform coordinates: 6° offset in angle in depth camera
 
-            result = BodyResult(self.__body_frame.get_body(0), self.__leftHand.handstate, self.__rightHand.handstate)
+            result = BodyResult(body, self.__leftHand.handstate, self.__rightHand.handstate)
             return result
         else:
             return None
@@ -197,8 +196,7 @@ class TrackerController:
                 coord_filter.min_cutoff = min_cutoff
                 coord_filter.beta = beta
 
-    def filter_body_coordinates(self, body:pykinect.Body, t: float):
-        # Todo: Check if this takes effect: seems to take effect here
+    def filter_body_coordinates(self, body: pykinect.Body, t: float):
         for jointfilterset, joint in zip(self.__one_euro_filters, body.joints):
             joint.position.x = jointfilterset[0](t, joint.position.x)
             joint.position.y = jointfilterset[1](t, joint.position.y)

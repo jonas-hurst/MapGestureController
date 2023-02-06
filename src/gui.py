@@ -1,3 +1,5 @@
+import math
+
 from guibaseExtended import GuibaseExtended, CalibrateDialogExtended
 from cameracontrol import *
 from screen import Screen
@@ -72,6 +74,8 @@ class MainWindow(GuibaseExtended):
 
             infodata = {"fps": self.__tracker_controller.fps,
                         "bodies": self.__tracker_controller.number_tracked_bodies,
+                        "pitch": self.__tracker_controller.pitch * (180 / math.pi),
+                        "roll": self.__tracker_controller.roll * (180 / math.pi),
                         "left": 0,
                         "right": 0,
                         "cut": 0,

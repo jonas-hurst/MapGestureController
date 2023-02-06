@@ -2,7 +2,7 @@ import wx
 from cv2 import resize,cvtColor, COLOR_BGR2RGB
 import numpy as np
 
-from guibase import Guibase
+from guibase import Guibase, CalibrateDialog
 
 
 class GuibaseExtended(Guibase):
@@ -24,6 +24,7 @@ class GuibaseExtended(Guibase):
         btn_value = self.tgl_btn_start_camera.Value
         self.tgl_btn_show_feed.Enable(btn_value)
         self.tgl_btn_touchcontrol.Enable(btn_value)
+        self.calibrate_button.Enable(btn_value)
         if btn_value:
             self.tgl_btn_start_camera.SetLabelText("Stop Camera")
         else:
@@ -57,3 +58,8 @@ class GuibaseExtended(Guibase):
         frame_small_rgb = cvtColor(frame_small, COLOR_BGR2RGB)
         self.bmp.CopyFromBuffer(frame_small_rgb)
         self.image_container.SetInactiveBitmap(self.bmp)
+
+
+class CalibrateDialogExtended(CalibrateDialog):
+    def __init__(self, parent):
+        CalibrateDialog.__init__(self, parent)

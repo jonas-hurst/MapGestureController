@@ -1,5 +1,4 @@
-from guibaseExtended import GuibaseExtended
-import threading
+from guibaseExtended import GuibaseExtended, CalibrateDialogExtended
 from cameracontrol import *
 from screen import Screen
 import geom
@@ -29,6 +28,13 @@ class MainWindow(GuibaseExtended):
         if self.__tracker_controller.camera_running:
             self.stop_camera()
         GuibaseExtended.on_close(self, event)
+
+    def on_calibrate(self, event):
+        dlg = CalibrateDialogWindow(self,
+                                    self.__tracker_controller.tune_filters,
+                                    self.__tracker_controller.minCutoff,
+                                    self.__tracker_controller.beta)
+        dlg.ShowModal()
 
     def start_camera(self):
         camera_thread = threading.Thread(target=self.cameraloop, daemon=True)
@@ -67,11 +73,15 @@ class MainWindow(GuibaseExtended):
             infodata = {"fps": self.__tracker_controller.fps,
                         "bodies": self.__tracker_controller.number_tracked_bodies,
                         "left": 0,
-                        "right": 0}
+                        "right": 0,
+                        "cut": 0,
+                        "beta": 0}
 
             if bodyresult is not None:
                 infodata["left"] = bodyresult.left_hand_state
                 infodata["right"] = bodyresult.right_hand_state
+                infodata["cut"] = self.__tracker_controller.minCutoff
+                infodata["beta"] = self.__tracker_controller.beta
 
                 # Calculate the point in 3D-space wehre pointer-line and infinite screen-plain intersect
                 # A check whether this point is on screen occurs later
@@ -102,3 +112,21 @@ class MainWindow(GuibaseExtended):
                 break
 
         server.close_server()
+
+
+class CalibrateDialogWindow(CalibrateDialogExtended):
+    def __init__(self, parent, tunefunction, cutoff, beta):
+        CalibrateDialogExtended.__init__(self, parent)
+
+        self.tuneunction = tunefunction
+
+        self.slider_mincutoff.SetValue(int(cutoff * 100000))
+        self.slider_beta.SetValue(int(beta * 100))
+
+    def on_okay(self, event):
+        self.Close()
+
+    def on_slider_changed(self, event):
+        beta_value = self.slider_beta.GetValue() / 100
+        mincutoff_value = self.slider_mincutoff.GetValue() / 100000
+        self.tuneunction(min_cutoff=mincutoff_value, beta=beta_value)

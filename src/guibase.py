@@ -45,6 +45,11 @@ class Guibase ( wx.Frame ):
 
 		bSizer1.Add( self.tgl_btn_touchcontrol, 0, wx.ALL|wx.EXPAND, 5 )
 
+		self.calibrate_button = wx.Button( self, wx.ID_ANY, u"Calibrate", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.calibrate_button.Enable( False )
+
+		bSizer1.Add( self.calibrate_button, 0, wx.ALL|wx.EXPAND, 5 )
+
 		self.infogrid = wx.grid.Grid( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, 0 )
 
 		# Grid
@@ -86,6 +91,7 @@ class Guibase ( wx.Frame ):
 		# Connect Events
 		self.Bind( wx.EVT_CLOSE, self.on_close )
 		self.tgl_btn_start_camera.Bind( wx.EVT_TOGGLEBUTTON, self.on_tgl_camera )
+		self.calibrate_button.Bind( wx.EVT_BUTTON, self.on_calibrate )
 
 	def __del__( self ):
 		pass
@@ -96,6 +102,77 @@ class Guibase ( wx.Frame ):
 		event.Skip()
 
 	def on_tgl_camera( self, event ):
+		event.Skip()
+
+	def on_calibrate( self, event ):
+		event.Skip()
+
+
+###########################################################################
+## Class CalibrateDialog
+###########################################################################
+
+class CalibrateDialog ( wx.Dialog ):
+
+	def __init__( self, parent ):
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Calibrate Filter", pos = wx.DefaultPosition, size = wx.DefaultSize, style = wx.DEFAULT_DIALOG_STYLE|wx.STAY_ON_TOP )
+
+		self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
+
+		fgSizer2 = wx.FlexGridSizer( 4, 2, 0, 0 )
+		fgSizer2.SetFlexibleDirection( wx.BOTH )
+		fgSizer2.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
+
+		self.min_cutoff = wx.StaticText( self, wx.ID_ANY, u"Min Cutoff", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.min_cutoff.Wrap( -1 )
+
+		fgSizer2.Add( self.min_cutoff, 0, wx.ALL|wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.slider_mincutoff = wx.Slider( self, wx.ID_ANY, 100000, 0, 100000, wx.DefaultPosition, wx.Size( 500,-1 ), wx.SL_HORIZONTAL|wx.SL_MIN_MAX_LABELS|wx.SL_VALUE_LABEL )
+		fgSizer2.Add( self.slider_mincutoff, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.m_staticline1 = wx.StaticLine( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
+		fgSizer2.Add( self.m_staticline1, 0, wx.EXPAND |wx.ALL, 5 )
+
+		self.m_staticline2 = wx.StaticLine( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
+		fgSizer2.Add( self.m_staticline2, 0, wx.EXPAND |wx.ALL, 5 )
+
+		self.beta = wx.StaticText( self, wx.ID_ANY, u"Beta", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.beta.Wrap( -1 )
+
+		fgSizer2.Add( self.beta, 0, wx.ALL|wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.slider_beta = wx.Slider( self, wx.ID_ANY, 0, 0, 100, wx.DefaultPosition, wx.Size( 500,-1 ), wx.SL_HORIZONTAL|wx.SL_MIN_MAX_LABELS|wx.SL_VALUE_LABEL )
+		fgSizer2.Add( self.slider_beta, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+
+		fgSizer2.Add( ( 0, 0), 1, wx.EXPAND, 5 )
+
+		self.ok = wx.Button( self, wx.ID_ANY, u"Okay", wx.DefaultPosition, wx.DefaultSize, 0 )
+		fgSizer2.Add( self.ok, 0, wx.ALL|wx.ALIGN_RIGHT, 5 )
+
+
+		self.SetSizer( fgSizer2 )
+		self.Layout()
+		fgSizer2.Fit( self )
+
+		self.Centre( wx.BOTH )
+
+		# Connect Events
+		self.slider_mincutoff.Bind( wx.EVT_SLIDER, self.on_slider_changed )
+		self.slider_beta.Bind( wx.EVT_SLIDER, self.on_slider_changed )
+		self.ok.Bind( wx.EVT_BUTTON, self.on_okay )
+
+	def __del__( self ):
+		pass
+
+
+	# Virtual event handlers, override them in your derived class
+	def on_slider_changed( self, event ):
+		event.Skip()
+
+
+	def on_okay( self, event ):
 		event.Skip()
 
 

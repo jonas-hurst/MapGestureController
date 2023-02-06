@@ -2,7 +2,8 @@ import pykinect_azure as pykinect
 import mediapipe as mp
 import numpy as np
 import cv2 as cv
-from utils import CvFpsCalc
+from utils import CvFpsCalc, OneEuroFilter
+from time import time
 from model import *
 import threading
 from typing import Union
@@ -41,7 +42,7 @@ class BodyResult:
         self.right_elbow: geom.Point3D = geom.Point3D(body.joints[pykinect.K4ABT_JOINT_ELBOW_RIGHT].position.x,
                                                       body.joints[pykinect.K4ABT_JOINT_ELBOW_RIGHT].position.y,
                                                       body.joints[pykinect.K4ABT_JOINT_ELBOW_RIGHT].position.z)
-        self.right_pointer: geom.Line = geom.Line.from_points(self.nose, self.right_hand_tip)
+        self.right_pointer: geom.Line = geom.Line.from_points(self.nose, self.right_hand)
 
 
 class Hand:
@@ -64,8 +65,22 @@ class TrackerController:
         self.color_image_bgr: Union[np.ndarray, None] = None
         self.number_tracked_bodies = 0
 
+        # for 1Euro filter
+        self.minCutoff = 1
+        self.beta = 0
+
         self.__device: Union[pykinect.Device, None] = None
         self.__tracker: Union[pykinect.Tracker, None] = None
+
+        # Initialize list of 1-Euro-filters: Three filters per joint, one for each coordinate
+        self.__filters_initialized = False
+        self.__one_euro_filters: list[list[OneEuroFilter]] = []
+        for _ in range(pykinect.K4ABT_JOINT_COUNT):
+            joint_filters: list[OneEuroFilter] = []
+            for __ in range(3):
+                one_eur_filter = OneEuroFilter(0, 0, min_cutoff=self.minCutoff, beta=self.beta)
+                joint_filters.append(one_eur_filter)
+            self.__one_euro_filters.append(joint_filters)
 
         self.__body_frame = None
         self.__leftHand: Hand = Hand(Handednes.LEFT)
@@ -113,9 +128,15 @@ class TrackerController:
         self.__keypoint_classifier = None
 
     def getBodyCaptureData(self):
+        """
+        Method to be performed each frame
+        :return: Result of body tracking, derived from hand gesture and skeleton
+        """
         self.fps = self.__cvFpsCalc.get()
 
         capture = self.__device.update()
+
+        capture_time = time()
 
         # Get the color image from the capture
         ret, color_image_bgr = capture.get_color_image()
@@ -135,13 +156,58 @@ class TrackerController:
             self.visualizeImage(color_image_bgr)
 
         if self.__body_frame.get_num_bodies() > 0:
+
+            # on first body detected: initialize filters
+            if not self.__filters_initialized:
+                self.initialize_filters(self.__body_frame.get_body(0), capture_time)
+                self.__filters_initialized = True
+                return None
+
+            body: pykinect.Body = self.__body_frame.get_body(0)
+
+            # Filter coordinates
+            self.filter_body_coordinates(body, capture_time)
+
+            # Rotate coordinates
             # TODO: Transform coordinates: 6° offset in angle in depth camera
-            result = BodyResult(self.__body_frame.get_body(0), self.__leftHand.handstate, self.__rightHand.handstate)
+
+            result = BodyResult(body, self.__leftHand.handstate, self.__rightHand.handstate)
             return result
         else:
             return None
 
+    def initialize_filters(self, body: pykinect.Body, t0: float):
+        for jointfilterset, joint in zip(self.__one_euro_filters, body.joints):
+            jointfilterset[0].x_prev = joint.position.x
+            jointfilterset[0].t_prev = t0
+
+            jointfilterset[1].x_prev = joint.position.y
+            jointfilterset[1].t_prev = t0
+
+            jointfilterset[2].x_prev = joint.position.z
+            jointfilterset[2].t_prev = t0
+
+    def tune_filters(self, min_cutoff: float, beta: float):
+        self.minCutoff = min_cutoff
+        self.beta = beta
+
+        for jointfilterset in self.__one_euro_filters:
+            for coord_filter in jointfilterset:
+                coord_filter.min_cutoff = min_cutoff
+                coord_filter.beta = beta
+
+    def filter_body_coordinates(self, body: pykinect.Body, t: float):
+        for jointfilterset, joint in zip(self.__one_euro_filters, body.joints):
+            joint.position.x = jointfilterset[0](t, joint.position.x)
+            joint.position.y = jointfilterset[1](t, joint.position.y)
+            joint.position.z = jointfilterset[2](t, joint.position.z)
+
     def visualizeImage(self, color_image):
+        """
+        Generaet a cv2 image that can be displayed
+        :param color_image: The color image taken by the camera (BGR color format), as np.ndarray
+        :return: nothing
+        """
         self.__body_frame.draw_bodies(color_image, pykinect.K4A_CALIBRATION_TYPE_COLOR)
 
         color_image = cv.flip(color_image, 1)
@@ -164,6 +230,12 @@ class TrackerController:
         # cv.imshow("color image", color_image)
 
     def process_hands(self, color_image_bgr):
+        """
+        Method to process color image (BGR color format).
+        Mediapipe detects hand and landmarks, different model classifys hand state based on landmarks.
+        :param color_image_bgr: the image from camera
+        :return: nothing
+        """
         color_image_rgb = cv.cvtColor(color_image_bgr, cv.COLOR_BGR2RGB)
         color_image_rgb.flags.writeable = False
         self.__handresult = self.__hands.process(color_image_rgb)
@@ -198,6 +270,12 @@ class TrackerController:
             self.__rightHand.handstate = HandState.UNTRACKED
 
     def draw_info_text(self, image, hand: Hand):
+        """
+        Add info text to image for visualization.
+        :param image: Color image
+        :param hand: Hand Inforrmation
+        :return: nothing
+        """
         brect = hand.bbox
 
         info_text = hand.handednes.name

@@ -1,3 +1,4 @@
+import math
 import pykinect_azure as pykinect
 import mediapipe as mp
 import numpy as np
@@ -170,6 +171,10 @@ class TrackerController:
 
             # Rotate coordinates
             # TODO: Transform coordinates: 6° offset in angle in depth camera
+            pitch_angle = 6.0
+            # print("b_o: ", body.joints[pykinect.K4ABT_JOINT_HAND_RIGHT].position.y, body.joints[pykinect.K4ABT_JOINT_HAND_RIGHT].position.z)
+            self.correct_pitch(body, pitch_angle)
+            # print("a_o: ", body.joints[pykinect.K4ABT_JOINT_HAND_RIGHT].position.y, body.joints[pykinect.K4ABT_JOINT_HAND_RIGHT].position.z)
 
             result = BodyResult(body, self.__leftHand.handstate, self.__rightHand.handstate)
             return result
@@ -201,6 +206,26 @@ class TrackerController:
             joint.position.x = jointfilterset[0](t, joint.position.x)
             joint.position.y = jointfilterset[1](t, joint.position.y)
             joint.position.z = jointfilterset[2](t, joint.position.z)
+
+    def correct_pitch(self, body: pykinect.Body, angle: float):
+        if abs(angle) > 85:
+            raise ValueError("Cannot perform correction: Danger of Gimbal Lock")
+
+        angle_rad = angle * (math.pi / 180)
+        matrix = np.array([[math.cos(angle_rad), -math.sin(angle_rad)],
+                           [math.sin(angle_rad),  math.cos(angle_rad)]])
+        vector = np.zeros(2)
+
+        for joint in body.joints:
+            # As rotation occurs around x-axis, we can neglect x-value as it remains the same anyway
+            vector[0] = joint.position.y
+            vector[1] = joint.position.z
+
+            transformed = matrix @ vector  # matrix-vector multiplication
+
+            joint.position.y = transformed[0]
+            joint.position.z = transformed[1]
+
 
     def visualizeImage(self, color_image):
         """

@@ -66,6 +66,10 @@ class TrackerController:
         self.color_image_bgr: Union[np.ndarray, None] = None
         self.number_tracked_bodies = 0
 
+        # pitch and roll
+        self.pitch = 0
+        self.roll = 0
+
         # for 1Euro filter
         self.minCutoff = 1
         self.beta = 0
@@ -137,6 +141,8 @@ class TrackerController:
 
         capture = self.__device.update()
 
+        imu_sample = self.__device.update_imu()
+
         capture_time = time()
 
         # Get the color image from the capture
@@ -146,6 +152,8 @@ class TrackerController:
             return
 
         self.__body_frame = self.__tracker.update()
+
+        self.calc_roll_pitch(imu_sample)
 
         self.number_tracked_bodies = self.__body_frame.get_num_bodies()
 
@@ -170,12 +178,20 @@ class TrackerController:
             self.filter_body_coordinates(body, capture_time)
 
             # Rotate coordinates to correct for camera pitch
-            self.correct_pitch(body)
+            self.correct_pitch(body, imu_sample)
 
             result = BodyResult(body, self.__leftHand.handstate, self.__rightHand.handstate)
             return result
         else:
             return None
+
+    def calc_roll_pitch(self, imu_sample: pykinect.ImuSample):
+        acc_sample = imu_sample.acc
+        acc_x = acc_sample[0]
+        acc_y = acc_sample[1]
+        acc_z = acc_sample[2]
+        self.pitch = math.asin(acc_x / math.sqrt(sum(i ** 2 for i in acc_sample)))
+        self.roll = math.atan(acc_y / acc_z)
 
     def initialize_filters(self, body: pykinect.Body, t0: float):
         for jointfilterset, joint in zip(self.__one_euro_filters, body.joints):
@@ -203,14 +219,11 @@ class TrackerController:
             joint.position.y = jointfilterset[1](t, joint.position.y)
             joint.position.z = jointfilterset[2](t, joint.position.z)
 
-    def correct_pitch(self, body: pykinect.Body):
+    def correct_pitch(self, body: pykinect.Body, imu_sample: pykinect.ImuSample):
         # depth camera is angled 6 degrees to  bottom
         pitch_angle_internal = 6
 
-        # TODO: Calculate pitch angle from IMU accelerometer
-        pitch_angle_imu = 0
-
-        pitch_angle = pitch_angle_internal + pitch_angle_imu
+        pitch_angle = pitch_angle_internal
 
         if abs(pitch_angle) > 85:
             raise ValueError("Cannot perform correction: Danger of Gimbal Lock")

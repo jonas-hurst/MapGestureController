@@ -170,8 +170,7 @@ class TrackerController:
             self.filter_body_coordinates(body, capture_time)
 
             # Rotate coordinates to correct for camera pitch
-            pitch_angle = 6.0
-            self.correct_pitch(body, pitch_angle)
+            self.correct_pitch(body)
 
             result = BodyResult(body, self.__leftHand.handstate, self.__rightHand.handstate)
             return result
@@ -204,8 +203,16 @@ class TrackerController:
             joint.position.y = jointfilterset[1](t, joint.position.y)
             joint.position.z = jointfilterset[2](t, joint.position.z)
 
-    def correct_pitch(self, body: pykinect.Body, angle: float):
-        if abs(angle) > 85:
+    def correct_pitch(self, body: pykinect.Body):
+        # depth camera is angled 6 degrees to  bottom
+        pitch_angle_internal = 6
+
+        # TODO: Calculate pitch angle from IMU accelerometer
+        pitch_angle_imu = 0
+
+        pitch_angle = pitch_angle_internal + pitch_angle_imu
+
+        if abs(pitch_angle) > 85:
             raise ValueError("Cannot perform correction: Danger of Gimbal Lock")
 
         angle_rad = angle * (math.pi / 180)

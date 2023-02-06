@@ -169,12 +169,9 @@ class TrackerController:
             # Filter coordinates
             self.filter_body_coordinates(body, capture_time)
 
-            # Rotate coordinates
-            # TODO: Transform coordinates: 6° offset in angle in depth camera
+            # Rotate coordinates to correct for camera pitch
             pitch_angle = 6.0
-            # print("b_o: ", body.joints[pykinect.K4ABT_JOINT_HAND_RIGHT].position.y, body.joints[pykinect.K4ABT_JOINT_HAND_RIGHT].position.z)
             self.correct_pitch(body, pitch_angle)
-            # print("a_o: ", body.joints[pykinect.K4ABT_JOINT_HAND_RIGHT].position.y, body.joints[pykinect.K4ABT_JOINT_HAND_RIGHT].position.z)
 
             result = BodyResult(body, self.__leftHand.handstate, self.__rightHand.handstate)
             return result

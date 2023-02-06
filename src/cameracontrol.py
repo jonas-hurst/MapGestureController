@@ -215,7 +215,7 @@ class TrackerController:
         if abs(pitch_angle) > 85:
             raise ValueError("Cannot perform correction: Danger of Gimbal Lock")
 
-        angle_rad = angle * (math.pi / 180)
+        angle_rad = pitch_angle * (math.pi / 180)
         matrix = np.array([[math.cos(angle_rad), -math.sin(angle_rad)],
                            [math.sin(angle_rad),  math.cos(angle_rad)]])
         vector = np.zeros(2)

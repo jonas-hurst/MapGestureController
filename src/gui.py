@@ -74,8 +74,8 @@ class MainWindow(GuibaseExtended):
 
             infodata = {"fps": self.__tracker_controller.fps,
                         "bodies": self.__tracker_controller.number_tracked_bodies,
-                        "pitch": self.__tracker_controller.pitch * (180 / math.pi),
-                        "roll": self.__tracker_controller.roll * (180 / math.pi),
+                        "pitch": round(self.__tracker_controller.pitch * (180 / math.pi), 1),
+                        "roll": round(self.__tracker_controller.roll * (180 / math.pi), 1),
                         "left": 0,
                         "right": 0,
                         "cut": 0,

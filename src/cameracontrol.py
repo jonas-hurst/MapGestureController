@@ -189,6 +189,13 @@ class TrackerController:
             return None
 
     def calc_roll_pitch(self, imu_sample: pykinect.ImuSample):
+        """
+        Calculate devices roll (rotation around device´s z-axis) and pitch (rotation around devices x-axis) angles
+        from IMU gyroscope measures
+        :param imu_sample: Sample of IMU measuremnts
+        :return: None
+        """
+
         acc_sample = imu_sample.acc
         acc_x = acc_sample[0]
         acc_y = acc_sample[1]
@@ -223,6 +230,12 @@ class TrackerController:
             joint.position.z = jointfilterset[2](t, joint.position.z)
 
     def correct_roll_pitch(self, body: pykinect.Body):
+        """
+        Method to correct for roll (rotation around device´s z-axis) and pitch (rotation around device´s x-axis)
+        :param body: Body object, whose coordinates should be corrected
+        :return: None
+        """
+
         # depth camera is angled 6 degrees to  bottom
         pitch_angle_internal = -6 * (math.pi / 180)
         pitch_angle = pitch_angle_internal - self.pitch

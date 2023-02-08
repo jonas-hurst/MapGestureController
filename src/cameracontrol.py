@@ -201,6 +201,13 @@ class TrackerController:
         self.roll = math.atan(acc_y / acc_z)
 
     def initialize_filters(self, body: pykinect.Body, t0: float):
+        """
+        Method to initialize 1-Euro-filters for filtering joint coordinates
+        :param body: Tracked body object whose joints should be filtered
+        :param t0: Timestamp at which body was tracked in sesconds
+        :return: None
+        """
+
         for jointfilterset, joint in zip(self.__one_euro_filters, body.joints):
             jointfilterset[0].x_prev = joint.position.x
             jointfilterset[0].t_prev = t0
@@ -212,6 +219,13 @@ class TrackerController:
             jointfilterset[2].t_prev = t0
 
     def tune_filters(self, min_cutoff: float, beta: float):
+        """
+        Method to adjust 1-Euro-filter parameters
+        :param min_cutoff: Minimum-Cutoff value
+        :param beta: Beta value
+        :return: None
+        """
+
         self.minCutoff = min_cutoff
         self.beta = beta
 
@@ -221,6 +235,13 @@ class TrackerController:
                 coord_filter.beta = beta
 
     def filter_body_coordinates(self, body: pykinect.Body, t: float):
+        """
+        Method to perform 1-Euro-filtering on Body joint coordinates
+        :param body: Tracked body object whose joints should be filtered
+        :param t: Timestamp at which body was tracked in seconds
+        :return: None
+        """
+
         for jointfilterset, joint in zip(self.__one_euro_filters, body.joints):
             joint.position.x = jointfilterset[0](t, joint.position.x)
             joint.position.y = jointfilterset[1](t, joint.position.y)

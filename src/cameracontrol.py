@@ -112,7 +112,7 @@ class TrackerController:
         device_config = pykinect.default_configuration
         device_config.color_resolution = pykinect.K4A_COLOR_RESOLUTION_720P
         device_config.depth_mode = pykinect.K4A_DEPTH_MODE_WFOV_2X2BINNED
-        device_config.camera_fps = pykinect.K4A_FRAMES_PER_SECOND_30
+        device_config.camera_fps = pykinect.K4A_FRAMES_PER_SECOND_5
         device_config.synchronized_images_only = True
 
         device = pykinect.start_device(config=device_config)
@@ -177,8 +177,11 @@ class TrackerController:
             # Filter coordinates
             self.filter_body_coordinates(body, capture_time)
 
+            print("b", body.joints[pykinect.K4ABT_JOINT_HANDTIP_LEFT].position.x)
             # Rotate coordinates to correct for camera pitch
-            self.correct_pitch(body, imu_sample)
+            self.correct_roll_pitch(body)
+
+            print("a", body.joints[pykinect.K4ABT_JOINT_HANDTIP_LEFT].position.x)
 
             result = BodyResult(body, self.__leftHand.handstate, self.__rightHand.handstate)
             return result
@@ -219,29 +222,43 @@ class TrackerController:
             joint.position.y = jointfilterset[1](t, joint.position.y)
             joint.position.z = jointfilterset[2](t, joint.position.z)
 
-    def correct_pitch(self, body: pykinect.Body, imu_sample: pykinect.ImuSample):
+    def correct_roll_pitch(self, body: pykinect.Body):
         # depth camera is angled 6 degrees to  bottom
-        pitch_angle_internal = 6
+        pitch_angle_internal = -6 * (math.pi / 180)
+        pitch_angle = pitch_angle_internal - self.pitch
 
-        pitch_angle = pitch_angle_internal
+        roll_angle = - self.roll
 
-        if abs(pitch_angle) > 85:
+        if abs(pitch_angle) > math.pi / 2 or abs(roll_angle) > math.pi / 2:
             raise ValueError("Cannot perform correction: Danger of Gimbal Lock")
 
-        angle_rad = pitch_angle * (math.pi / 180)
-        matrix = np.array([[math.cos(angle_rad), -math.sin(angle_rad)],
-                           [math.sin(angle_rad),  math.cos(angle_rad)]])
-        vector = np.zeros(2)
+        # matrix to corect for pitch angle
+        # mathmatically speaking: rotation around x axis
+        matrix_pitch_correction = np.array([[1, 0, 0],
+                                            [0, math.cos(pitch_angle), -math.sin(pitch_angle)],
+                                            [0, math.sin(pitch_angle),  math.cos(pitch_angle)]])
+
+        # matrix to correct for roll angle
+        # mathmatically speaking, this is a rotation around z axis
+        matrix_roll_correction = np.array([[math.cos(roll_angle), -math.sin(roll_angle), 0],
+                                           [math.sin(roll_angle),  math.cos(roll_angle), 0],
+                                           [0, 0, 1]])
+
+        rotation_matrix = matrix_roll_correction @ matrix_pitch_correction
+
+        vector = np.zeros(3)
 
         for joint in body.joints:
             # As rotation occurs around x-axis, we can neglect x-value as it remains the same anyway
-            vector[0] = joint.position.y
-            vector[1] = joint.position.z
+            vector[0] = joint.position.x
+            vector[1] = joint.position.y
+            vector[2] = joint.position.z
 
-            transformed = matrix @ vector  # matrix-vector multiplication
+            transformed = rotation_matrix @ vector  # matrix-vector multiplication
 
-            joint.position.y = transformed[0]
-            joint.position.z = transformed[1]
+            joint.position.x = transformed[0]
+            joint.position.y = transformed[1]
+            joint.position.z = transformed[2]
 
 
     def visualizeImage(self, color_image):

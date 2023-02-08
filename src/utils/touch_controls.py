@@ -285,3 +285,10 @@ def makeZoom(x1_start, y1_start, x1_end, y1_end,
     # Pull Up
     _pointer_leave_double()
     _inject_double()
+
+
+# Examples:
+# if __name__ == "__main__":
+#     makeTap(1400, 400)
+#     makeSwipe(1000, 600, 1800, 700, 100)
+#     makeZoom(1500, 600, 1800, 400, 1400, 700, 1100, 900, num_steps=100)

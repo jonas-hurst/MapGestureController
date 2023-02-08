@@ -177,11 +177,8 @@ class TrackerController:
             # Filter coordinates
             self.filter_body_coordinates(body, capture_time)
 
-            print("b", body.joints[pykinect.K4ABT_JOINT_HANDTIP_LEFT].position.x)
             # Rotate coordinates to correct for camera pitch
             self.correct_roll_pitch(body)
-
-            print("a", body.joints[pykinect.K4ABT_JOINT_HANDTIP_LEFT].position.x)
 
             result = BodyResult(body, self.__leftHand.handstate, self.__rightHand.handstate)
             return result

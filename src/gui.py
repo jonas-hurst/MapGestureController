@@ -82,33 +82,7 @@ class MainWindow(GuibaseExtended):
                         "beta": 0}
 
             if bodyresult is not None:
-                infodata["left"] = bodyresult.left_hand_state
-                infodata["right"] = bodyresult.right_hand_state
-                infodata["cut"] = self.__tracker_controller.minCutoff
-                infodata["beta"] = self.__tracker_controller.beta
-
-                # Calculate the point in 3D-space wehre pointer-line and infinite screen-plain intersect
-                # A check whether this point is on screen occurs later
-                try:
-                    pnt = self.screen.screen_plain.intersect_line(bodyresult.right_pointer)
-                except geom.ParallelError:
-                    continue
-
-                # TODO: Handle ParallelError exception: Behavior if line and plain are parallel
-
-                # If line-plain intersection point is on screen, try-block is executed
-                # If it is not, except block executes.
-                try:
-                    # print(self.screen.coords_to_px(pnt))
-                    x, y = self.screen.coords_to_px(pnt)
-
-                    message["right"]["present"] = True
-                    message["right"]["position"]["x"] = x
-                    message["right"]["position"]["y"] = y
-                except ValueError:
-                    message["right"]["present"] = False
-
-                server.send_json(message)
+                self.process_bodyresult(bodyresult, server, message, infodata)
 
             self.set_datagrid_values(infodata)
 
@@ -116,6 +90,33 @@ class MainWindow(GuibaseExtended):
                 break
 
         server.close_server()
+
+    def process_bodyresult(self, bodyresult, server, message, infodata):
+        infodata["left"] = bodyresult.left_hand_state
+        infodata["right"] = bodyresult.right_hand_state
+        infodata["cut"] = self.__tracker_controller.minCutoff
+        infodata["beta"] = self.__tracker_controller.beta
+
+        # Calculate the point in 3D-space wehre pointer-line and infinite screen-plain intersect
+        # A check whether this point is on screen occurs later
+        try:
+            pnt = self.screen.screen_plain.intersect_line(bodyresult.right_pointer)
+        except geom.ParallelError:
+            return
+
+        # If line-plain intersection point is on screen, try-block is executed
+        # If it is not, except block executes.
+        try:
+            # print(self.screen.coords_to_px(pnt))
+            x, y = self.screen.coords_to_px(pnt)
+
+            message["right"]["present"] = True
+            message["right"]["position"]["x"] = x
+            message["right"]["position"]["y"] = y
+        except ValueError:
+            message["right"]["present"] = False
+
+        server.send_json(message)
 
 
 class CalibrateDialogWindow(CalibrateDialogExtended):

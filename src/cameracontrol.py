@@ -270,7 +270,6 @@ class TrackerController:
             joint.position.y = transformed[1]
             joint.position.z = transformed[2]
 
-
     def visualizeImage(self, color_image):
         """
         Generaet a cv2 image that can be displayed

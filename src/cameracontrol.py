@@ -112,7 +112,8 @@ class TrackerController:
         device_config = pykinect.default_configuration
         device_config.color_resolution = pykinect.K4A_COLOR_RESOLUTION_1080P
         device_config.depth_mode = pykinect.K4A_DEPTH_MODE_WFOV_2X2BINNED
-        device_config.camera_fps = pykinect.K4A_FRAMES_PER_SECOND_5
+        device_config.camera_fps = pykinect.K4A_FRAMES_PER_SECOND_30
+        device_config.color_format = pykinect.K4A_IMAGE_FORMAT_COLOR_BGRA32
         device_config.synchronized_images_only = True
 
         device = pykinect.start_device(config=device_config)
@@ -146,10 +147,12 @@ class TrackerController:
         capture_time = time()
 
         # Get the color image from the capture
-        ret, color_image_bgr = capture.get_color_image()
+        ret, color_image_bgra = capture.get_color_image()
 
         if not ret:
             return
+
+        color_image_rgb = cv.cvtColor(color_image_bgra, cv.COLOR_BGR2RGB)
 
         self.__body_frame = self.__tracker.update()
 
@@ -158,11 +161,11 @@ class TrackerController:
         self.number_tracked_bodies = self.__body_frame.get_num_bodies()
 
         if not self.__handProcessThread.is_alive():
-            self.__handProcessThread = threading.Thread(target=self.process_hands, args=(cv.flip(color_image_bgr, 1),))
+            self.__handProcessThread = threading.Thread(target=self.process_hands, args=(cv.flip(color_image_rgb, 1),))
             self.__handProcessThread.start()
 
         if self.visualize:
-            self.visualizeImage(color_image_bgr)
+            self.visualizeImage(color_image_rgb)
 
         if self.__body_frame.get_num_bodies() > 0:
 
@@ -315,17 +318,16 @@ class TrackerController:
                     mp.solutions.drawing_styles.get_default_hand_landmarks_style(),
                     mp.solutions.drawing_styles.get_default_hand_connections_style())
 
-        self.color_image_bgr = color_image
+        self.color_image_rgb = color_image
         # cv.imshow("color image", color_image)
 
-    def process_hands(self, color_image_bgr):
+    def process_hands(self, color_image_rgb):
         """
         Method to process color image (BGR color format).
         Mediapipe detects hand and landmarks, different model classifys hand state based on landmarks.
         :param color_image_bgr: the image from camera
         :return: nothing
         """
-        color_image_rgb = cv.cvtColor(color_image_bgr, cv.COLOR_BGR2RGB)
         color_image_rgb.flags.writeable = False
         self.__handresult = self.__hands.process(color_image_rgb)
         right_hand_detected = False
@@ -343,10 +345,10 @@ class TrackerController:
                     hand = self.__rightHand
 
                 # calcualte bbox for hand
-                hand.bbox = calc_bounding_rect(color_image_bgr, landmark)
+                hand.bbox = calc_bounding_rect(color_image_rgb, landmark)
 
                 # create landmark list
-                landmark_list = calc_landmark_list(color_image_bgr, landmark)
+                landmark_list = calc_landmark_list(color_image_rgb, landmark)
                 # pre-process landmark list
                 pre_processed_landmark_list = pre_process_landmark(landmark_list)
                 # classify hand state

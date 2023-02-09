@@ -70,7 +70,7 @@ class MainWindow(GuibaseExtended):
 
         while True:
             bodyresult: BodyResult = self.__tracker_controller.getBodyCaptureData()
-            self.set_bitmap(self.__tracker_controller.color_image_bgr)
+            self.set_bitmap(self.__tracker_controller.color_image_rgb)
 
             infodata = {"fps": self.__tracker_controller.fps,
                         "bodies": self.__tracker_controller.number_tracked_bodies,

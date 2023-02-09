@@ -54,8 +54,7 @@ class GuibaseExtended(Guibase):
         :param frame: 2D numpy array containing the image
         :return: None
         """
-        frame_small = resize(frame.copy(), (854, 480))
-        frame_small_rgb = cvtColor(frame_small, COLOR_BGR2RGB)
+        frame_small_rgb = resize(frame.copy(), (854, 480))
         self.bmp.CopyFromBuffer(frame_small_rgb)
         self.image_container.SetInactiveBitmap(self.bmp)
 

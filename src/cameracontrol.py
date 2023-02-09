@@ -63,7 +63,7 @@ class TrackerController:
         self.camera_running = False
         self.fps: float = 0
         self.visualize: bool = visualize
-        self.color_image_bgr: Union[np.ndarray, None] = None
+        self.color_image_rgb: Union[np.ndarray, None] = None
         self.number_tracked_bodies = 0
 
         # pitch and roll
@@ -112,7 +112,7 @@ class TrackerController:
         device_config = pykinect.default_configuration
         device_config.color_resolution = pykinect.K4A_COLOR_RESOLUTION_720P
         device_config.depth_mode = pykinect.K4A_DEPTH_MODE_WFOV_2X2BINNED
-        device_config.camera_fps = pykinect.K4A_FRAMES_PER_SECOND_30
+        device_config.camera_fps = pykinect.K4A_FRAMES_PER_SECOND_5
         device_config.synchronized_images_only = True
 
         device = pykinect.start_device(config=device_config)

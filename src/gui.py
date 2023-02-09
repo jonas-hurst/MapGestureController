@@ -100,7 +100,11 @@ class MainWindow(GuibaseExtended):
         # Calculate the point in 3D-space wehre pointer-line and infinite screen-plain intersect
         # A check whether this point is on screen occurs later
         try:
-            pnt = self.screen.screen_plain.intersect_line(bodyresult.right_pointer)
+            pnt_right = self.screen.screen_plain.intersect_line(bodyresult.right_pointer)
+        except geom.ParallelError:
+            return
+        try:
+            pnt_left = self.screen.screen_plain.intersect_line(bodyresult.left_pointer)
         except geom.ParallelError:
             return
 
@@ -108,13 +112,20 @@ class MainWindow(GuibaseExtended):
         # If it is not, except block executes.
         try:
             # print(self.screen.coords_to_px(pnt))
-            x, y = self.screen.coords_to_px(pnt)
-
+            x_r, y_r = self.screen.coords_to_px(pnt_right)
             message["right"]["present"] = True
-            message["right"]["position"]["x"] = x
-            message["right"]["position"]["y"] = y
+            message["right"]["position"]["x"] = x_r
+            message["right"]["position"]["y"] = y_r
         except ValueError:
             message["right"]["present"] = False
+
+        try:
+            x_l, y_l = self.screen.coords_to_px(pnt_left)
+            message["left"]["present"] = True
+            message["left"]["position"]["x"] = x_l
+            message["left"]["position"]["y"] = y_l
+        except ValueError:
+            message["left"]["present"] = False
 
         server.send_json(message)
 

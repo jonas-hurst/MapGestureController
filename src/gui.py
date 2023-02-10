@@ -5,6 +5,7 @@ from cameracontrol import *
 from screen import Screen
 import geom
 from websocketserver import Server
+from constants import *
 
 
 class MainWindow(GuibaseExtended):
@@ -17,6 +18,9 @@ class MainWindow(GuibaseExtended):
                              1920, 1080)
 
         self.__tracker_controller = TrackerController(visualize=True)
+
+        self.prev_righthand_point = None
+        self.prev_lefthand_point = None
 
     def on_tgl_camera(self, event):
         btn_value = self.tgl_btn_start_camera.Value
@@ -99,6 +103,7 @@ class MainWindow(GuibaseExtended):
 
         # Calculate the point in 3D-space wehre pointer-line and infinite screen-plain intersect
         # A check whether this point is on screen occurs later
+        # TODO: Properly handle ParallelError, e.g. set pnt(0,0,0)
         try:
             pnt_right = self.screen.screen_plain.intersect_line(bodyresult.right_pointer)
         except geom.ParallelError:
@@ -127,7 +132,36 @@ class MainWindow(GuibaseExtended):
         except ValueError:
             message["left"]["present"] = False
 
+        # TODO: behavior if xr, yr, xl, yl are not assigned
+
+        operation: Operation = self.detect_operation(bodyresult)
+        if operation == Operation.PAN_RIGHTHAND:
+            self.pan_righthand(x_r, y_r)
+        if operation == Operation.PAN_LEFTHAND:
+            self.pan_lefthand(x_l, y_l)
+        if operation == Operation.ZOOM:
+            self.zoom()
+
         server.send_json(message)
+
+    def detect_operation(self, bodyresult: BodyResult) -> Operation:
+        if bodyresult.right_hand_state == HandState.CLOSED and bodyresult.left_hand_state != HandState.CLOSED:
+            return Operation.PAN_RIGHTHAND
+        if bodyresult.left_hand_state == HandState.CLOSED and bodyresult.right_hand_state != HandState.CLOSED:
+            return Operation.PAN_LEFTHAND
+        if bodyresult.left_hand_state == HandState.CLOSED and bodyresult.right_hand_state == HandState.CLOSED:
+            return Operation.ZOOM
+
+    def pan_righthand(self, x: int, y: int):
+        if self.prev_righthand_point is None:
+            self.prev_righthand_point = (x, y)
+            tc._pointer_make_contact_single()
+
+    def pan_lefthand(self, x: int, y: int):
+        pass
+
+    def zoom(self):
+        pass
 
 
 class CalibrateDialogWindow(CalibrateDialogExtended):

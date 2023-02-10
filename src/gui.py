@@ -155,7 +155,6 @@ class MainWindow(GuibaseExtended):
     def pan_righthand(self, x: int, y: int):
         if self.prev_righthand_point is None:
             self.prev_righthand_point = (x, y)
-            tc._pointer_make_contact_single()
 
     def pan_lefthand(self, x: int, y: int):
         pass

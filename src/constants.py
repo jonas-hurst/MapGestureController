@@ -24,3 +24,10 @@ class Handednes(Enum):
     LEFT = 0
     RIGHT = 1
     INVALID = 2
+
+
+class Operation(Enum):
+    SELECT = 0
+    PAN_LEFTHAND = 1
+    PAN_RIGHTHAND = 2
+    ZOOM = 3

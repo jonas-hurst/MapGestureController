@@ -91,6 +91,7 @@ class Guibase ( wx.Frame ):
 		# Connect Events
 		self.Bind( wx.EVT_CLOSE, self.on_close )
 		self.tgl_btn_start_camera.Bind( wx.EVT_TOGGLEBUTTON, self.on_tgl_camera )
+		self.tgl_btn_touchcontrol.Bind( wx.EVT_TOGGLEBUTTON, self.on_tgl_touchcontrol )
 		self.calibrate_button.Bind( wx.EVT_BUTTON, self.on_calibrate )
 
 	def __del__( self ):
@@ -102,6 +103,9 @@ class Guibase ( wx.Frame ):
 		event.Skip()
 
 	def on_tgl_camera( self, event ):
+		event.Skip()
+
+	def on_tgl_touchcontrol( self, event ):
 		event.Skip()
 
 	def on_calibrate( self, event ):

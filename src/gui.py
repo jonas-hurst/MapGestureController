@@ -1,11 +1,10 @@
-import math
-
 from guibaseExtended import GuibaseExtended, CalibrateDialogExtended
 from cameracontrol import *
 from screen import Screen
 import geom
 from websocketserver import Server
 from constants import *
+import touchcontrol as tc
 
 
 class MainWindow(GuibaseExtended):
@@ -19,8 +18,10 @@ class MainWindow(GuibaseExtended):
 
         self.__tracker_controller = TrackerController(visualize=True)
 
-        self.prev_righthand_point = None
-        self.prev_lefthand_point = None
+        self.prev_lefthand_pointing = None
+        self.left_hand_state_history = []
+        self.prev_righthand_pointing = None
+        self.right_hand_state_history = []
 
     def on_tgl_camera(self, event):
         btn_value = self.tgl_btn_start_camera.Value
@@ -82,12 +83,35 @@ class MainWindow(GuibaseExtended):
                         "roll": round(self.__tracker_controller.roll * (180 / math.pi), 1),
                         "left": 0,
                         "right": 0,
+                        "operation": 0,
                         "cut": 0,
                         "beta": 0}
 
+            # Add Left Hand state to history
+            if len(self.left_hand_state_history) > 10:
+                self.left_hand_state_history.pop()
+            try:
+                self.left_hand_state_history.append(bodyresult.left_hand_state)
+            except AttributeError:
+                self.left_hand_state_history.append(HandState.UNTRACKED)
+
+            # Add Right hand state to history
+            if len(self.right_hand_state_history) > 10:
+                self.right_hand_state_history.pop()
+            try:
+                self.right_hand_state_history.append(bodyresult.right_hand_state)
+            except AttributeError:
+                self.right_hand_state_history.append(HandState.UNTRACKED)
+
             if bodyresult is not None:
                 self.process_bodyresult(bodyresult, server, message, infodata)
+            else:
+                message["right"]["present"] = False
+                message["left"]["present"] = False
+                tc.finger_up()
+                self.prev_righthand_pointing = None
 
+            server.send_json(message)
             self.set_datagrid_values(infodata)
 
             if not self.__tracker_controller.camera_running:
@@ -96,53 +120,52 @@ class MainWindow(GuibaseExtended):
         server.close_server()
 
     def process_bodyresult(self, bodyresult, server, message, infodata):
-        infodata["left"] = bodyresult.left_hand_state
-        infodata["right"] = bodyresult.right_hand_state
+        infodata["left"] = bodyresult.left_hand_state.name
+        infodata["right"] = bodyresult.right_hand_state.name
         infodata["cut"] = self.__tracker_controller.minCutoff
         infodata["beta"] = self.__tracker_controller.beta
 
+        screen_x_r, screen_y_r = self.get_screen_intersection(bodyresult.right_pointer)
+        if screen_x_r == -1 and screen_y_r == -1:
+            message["right"]["present"] = False
+        else:
+            message["right"]["present"] = True
+            message["right"]["position"]["x"] = screen_x_r
+            message["right"]["position"]["y"] = screen_y_r
+
+        screen_x_l, screen_y_l = self.get_screen_intersection(bodyresult.left_pointer)
+        if screen_x_l == -1 and screen_y_l == -1:
+            message["left"]["present"] = False
+        else:
+            message["left"]["present"] = True
+            message["left"]["position"]["x"] = screen_x_l
+            message["left"]["position"]["y"] = screen_y_l
+
+        if screen_x_r == -1 and screen_y_r == -1 and screen_x_l == -1 and screen_y_l == -1:
+            return
+
+        # After here only if if hand points to screen is on screen
+        operation: Operation = self.detect_operation(bodyresult)
+        infodata["operation"] = operation.name
+
+    def get_screen_intersection(self, pointer: geom.Line) -> tuple[int, int]:
         # Calculate the point in 3D-space wehre pointer-line and infinite screen-plain intersect
         # A check whether this point is on screen occurs later
-        # TODO: Properly handle ParallelError, e.g. set pnt(0,0,0)
         try:
-            pnt_right = self.screen.screen_plain.intersect_line(bodyresult.right_pointer)
+            pnt = self.screen.screen_plain.intersect_line(pointer)
         except geom.ParallelError:
-            return
-        try:
-            pnt_left = self.screen.screen_plain.intersect_line(bodyresult.left_pointer)
-        except geom.ParallelError:
-            return
+            print("PARALLEL ERROR")
+            return -1, -1
 
         # If line-plain intersection point is on screen, try-block is executed
         # If it is not, except block executes.
         try:
-            # print(self.screen.coords_to_px(pnt))
-            x_r, y_r = self.screen.coords_to_px(pnt_right)
-            message["right"]["present"] = True
-            message["right"]["position"]["x"] = x_r
-            message["right"]["position"]["y"] = y_r
+            screen_x, screen_y = self.screen.coords_to_px(pnt)
+
         except ValueError:
-            message["right"]["present"] = False
+            return -1, -1
 
-        try:
-            x_l, y_l = self.screen.coords_to_px(pnt_left)
-            message["left"]["present"] = True
-            message["left"]["position"]["x"] = x_l
-            message["left"]["position"]["y"] = y_l
-        except ValueError:
-            message["left"]["present"] = False
-
-        # TODO: behavior if xr, yr, xl, yl are not assigned
-
-        operation: Operation = self.detect_operation(bodyresult)
-        if operation == Operation.PAN_RIGHTHAND:
-            self.pan_righthand(x_r, y_r)
-        if operation == Operation.PAN_LEFTHAND:
-            self.pan_lefthand(x_l, y_l)
-        if operation == Operation.ZOOM:
-            self.zoom()
-
-        server.send_json(message)
+        return screen_x, screen_y
 
     def detect_operation(self, bodyresult: BodyResult) -> Operation:
         if bodyresult.right_hand_state == HandState.CLOSED and bodyresult.left_hand_state != HandState.CLOSED:
@@ -151,10 +174,16 @@ class MainWindow(GuibaseExtended):
             return Operation.PAN_LEFTHAND
         if bodyresult.left_hand_state == HandState.CLOSED and bodyresult.right_hand_state == HandState.CLOSED:
             return Operation.ZOOM
+        return Operation.IDLE
 
     def pan_righthand(self, x: int, y: int):
-        if self.prev_righthand_point is None:
-            self.prev_righthand_point = (x, y)
+        if self.prev_righthand_pointing is None:
+            self.prev_righthand_pointing = (x, y)
+            tc.finger_down((x, y))
+            print("engage")
+        else:
+            print("moving")
+            tc.move_finger((1920 - (self.prev_righthand_pointing[0]-x), self.prev_righthand_pointing[1]-y))
 
     def pan_lefthand(self, x: int, y: int):
         pass

@@ -16,7 +16,15 @@ class MainWindow(GuibaseExtended):
                              geom.Point3D(1100, 130, -340),
                              1920, 1080)
 
+        self.touch_control_enabled = False
+
         self.__tracker_controller = TrackerController(visualize=True)
+
+        self.infodata: dict = self.initialize_infodata()
+        self.set_datagrid_values(self.infodata)
+
+        self.current_operation: Operation = Operation.IDLE  # Operation performed in the current frame
+        self.previous_operation: Operation = Operation.IDLE  # Operation performed in the alst frame
 
         self.prev_lefthand_pointing = None
         self.left_hand_state_history = []
@@ -31,6 +39,9 @@ class MainWindow(GuibaseExtended):
             self.stop_camera()
         GuibaseExtended.on_tgl_camera(self, event)
 
+    def on_tgl_touchcontrol(self, event):
+        self.touch_control_enabled = self.tgl_btn_touchcontrol.Value
+
     def on_close(self, event):
         if self.__tracker_controller.camera_running:
             self.stop_camera()
@@ -42,6 +53,18 @@ class MainWindow(GuibaseExtended):
                                     self.__tracker_controller.minCutoff,
                                     self.__tracker_controller.beta)
         dlg.ShowModal()
+
+    def initialize_infodata(self) -> dict:
+        d = {"fps": 0,
+             "bodies": "n.a.",
+             "pitch": "n.a.",
+             "roll": "n.a.",
+             "left": HandState.UNTRACKED.name,
+             "right": HandState.UNTRACKED.name,
+             "operation": Operation.IDLE.name,
+             "cut": 0,
+             "beta": 0}
+        return d
 
     def start_camera(self):
         camera_thread = threading.Thread(target=self.cameraloop, daemon=True)
@@ -77,18 +100,13 @@ class MainWindow(GuibaseExtended):
             bodyresult: BodyResult = self.__tracker_controller.getBodyCaptureData()
             self.set_bitmap(self.__tracker_controller.color_image_rgb)
 
-            infodata = {"fps": self.__tracker_controller.fps,
-                        "bodies": self.__tracker_controller.number_tracked_bodies,
-                        "pitch": round(self.__tracker_controller.pitch * (180 / math.pi), 1),
-                        "roll": round(self.__tracker_controller.roll * (180 / math.pi), 1),
-                        "left": 0,
-                        "right": 0,
-                        "operation": 0,
-                        "cut": 0,
-                        "beta": 0}
+            self.infodata["fps"] = self.__tracker_controller.fps
+            self.infodata["bodies"] = self.__tracker_controller.number_tracked_bodies
+            self.infodata["pitch"] = round(self.__tracker_controller.pitch * (180 / math.pi), 1)
+            self.infodata["roll"] = round(self.__tracker_controller.roll * (180 / math.pi), 1)
 
             # Add Left Hand state to history
-            if len(self.left_hand_state_history) > 10:
+            if len(self.left_hand_state_history) > 5:
                 self.left_hand_state_history.pop()
             try:
                 self.left_hand_state_history.append(bodyresult.left_hand_state)
@@ -96,7 +114,7 @@ class MainWindow(GuibaseExtended):
                 self.left_hand_state_history.append(HandState.UNTRACKED)
 
             # Add Right hand state to history
-            if len(self.right_hand_state_history) > 10:
+            if len(self.right_hand_state_history) > 5:
                 self.right_hand_state_history.pop()
             try:
                 self.right_hand_state_history.append(bodyresult.right_hand_state)
@@ -104,26 +122,28 @@ class MainWindow(GuibaseExtended):
                 self.right_hand_state_history.append(HandState.UNTRACKED)
 
             if bodyresult is not None:
-                self.process_bodyresult(bodyresult, server, message, infodata)
+                self.process_bodyresult(bodyresult, message)
             else:
                 message["right"]["present"] = False
                 message["left"]["present"] = False
                 tc.finger_up()
                 self.prev_righthand_pointing = None
 
+            self.infodata["operation"] = self.current_operation.name
+
             server.send_json(message)
-            self.set_datagrid_values(infodata)
+            self.set_datagrid_values(self.infodata)
 
             if not self.__tracker_controller.camera_running:
                 break
 
         server.close_server()
 
-    def process_bodyresult(self, bodyresult, server, message, infodata):
-        infodata["left"] = bodyresult.left_hand_state.name
-        infodata["right"] = bodyresult.right_hand_state.name
-        infodata["cut"] = self.__tracker_controller.minCutoff
-        infodata["beta"] = self.__tracker_controller.beta
+    def process_bodyresult(self, bodyresult, message):
+        self.infodata["left"] = bodyresult.left_hand_state.name
+        self.infodata["right"] = bodyresult.right_hand_state.name
+        self.infodata["cut"] = self.__tracker_controller.minCutoff
+        self.infodata["beta"] = self.__tracker_controller.beta
 
         screen_x_r, screen_y_r = self.get_screen_intersection(bodyresult.right_pointer)
         if screen_x_r == -1 and screen_y_r == -1:
@@ -142,11 +162,19 @@ class MainWindow(GuibaseExtended):
             message["left"]["position"]["y"] = screen_y_l
 
         if screen_x_r == -1 and screen_y_r == -1 and screen_x_l == -1 and screen_y_l == -1:
+            self.previous_operation = self.current_operation
+            self.current_operation = Operation.IDLE
             return
 
         # After here only if if hand points to screen is on screen
-        operation: Operation = self.detect_operation(bodyresult)
-        infodata["operation"] = operation.name
+        self.previous_operation = self.current_operation
+        self.current_operation = self.detect_operation(bodyresult)
+
+        operation_transition: OperationTransition = self.get_operation_transition()
+
+        if self.touch_control_enabled:
+            self.process_transition(operation_transition, screen_x_l, screen_y_l, screen_x_r, screen_y_r)
+            self.process_operation(screen_x_l, screen_y_l, screen_x_r, screen_y_r)
 
     def get_screen_intersection(self, pointer: geom.Line) -> tuple[int, int]:
         # Calculate the point in 3D-space wehre pointer-line and infinite screen-plain intersect
@@ -168,22 +196,150 @@ class MainWindow(GuibaseExtended):
         return screen_x, screen_y
 
     def detect_operation(self, bodyresult: BodyResult) -> Operation:
-        if bodyresult.right_hand_state == HandState.CLOSED and bodyresult.left_hand_state != HandState.CLOSED:
+        # if bodyresult.right_hand_state == HandState.CLOSED and bodyresult.left_hand_state != HandState.CLOSED:
+        #     return Operation.PAN_RIGHTHAND
+        # if bodyresult.left_hand_state == HandState.CLOSED and bodyresult.right_hand_state != HandState.CLOSED:
+        #     return Operation.PAN_LEFTHAND
+        # if bodyresult.left_hand_state == HandState.CLOSED and bodyresult.right_hand_state == HandState.CLOSED:
+        #     return Operation.ZOOM
+        if bodyresult.right_hand_state == HandState.CLOSED:
             return Operation.PAN_RIGHTHAND
-        if bodyresult.left_hand_state == HandState.CLOSED and bodyresult.right_hand_state != HandState.CLOSED:
-            return Operation.PAN_LEFTHAND
-        if bodyresult.left_hand_state == HandState.CLOSED and bodyresult.right_hand_state == HandState.CLOSED:
-            return Operation.ZOOM
         return Operation.IDLE
 
+    def get_operation_transition(self) -> OperationTransition:
+        """
+        Method to determine the appropriate transition between operations
+        :return: Transition between operations
+        """
+        if self.previous_operation == self.current_operation:
+            return OperationTransition.REMAINS
+
+        if self.previous_operation == Operation.SELECT:
+            if self.current_operation == Operation.PAN_LEFTHAND:
+                return OperationTransition.SELECT_TO_PANLEFT
+            if self.current_operation == Operation.PAN_RIGHTHAND:
+                return OperationTransition.SELECT_TO_PANRIGHT
+            if self.current_operation == Operation.ZOOM:
+                return OperationTransition.SELECT_TO_ZOOM
+            if self.current_operation == Operation.IDLE:
+                return OperationTransition.SELECT_TO_IDLE
+
+        if self.previous_operation == Operation.PAN_LEFTHAND:
+            if self.current_operation == Operation.SELECT:
+                return OperationTransition.PANLEFT_TO_SELECT
+            if self.current_operation == Operation.PAN_RIGHTHAND:
+                return OperationTransition.PANLEFT_TO_PANRIGHT
+            if self.current_operation == Operation.ZOOM:
+                return OperationTransition.PANLEFT_TO_ZOOM
+            if self.current_operation == Operation.IDLE:
+                return OperationTransition.PANLEFT_TO_IDLE
+
+        if self.previous_operation == Operation.PAN_RIGHTHAND:
+            if self.current_operation == Operation.SELECT:
+                return OperationTransition.PANRIGHT_TO_SELECT
+            if self.current_operation == Operation.PAN_LEFTHAND:
+                return OperationTransition.PANRIGHT_TO_PANLEFT
+            if self.current_operation == Operation.ZOOM:
+                return OperationTransition.PANRIGHT_TO_ZOOM
+            if self.current_operation == Operation.IDLE:
+                return OperationTransition.PANRIGHT_TO_IDLE
+
+        if self.previous_operation == Operation.ZOOM:
+            if self.current_operation == Operation.SELECT:
+                return OperationTransition.ZOOM_TO_SELECT
+            if self.current_operation == Operation.PAN_LEFTHAND:
+                return OperationTransition.ZOOM_TO_PANLEFT
+            if self.current_operation == Operation.PAN_RIGHTHAND:
+                return OperationTransition.ZOOM_TO_PANRIGHT
+            if self.current_operation == Operation.IDLE:
+                return OperationTransition.ZOOM_TO_IDLE
+
+        if self.previous_operation == Operation.IDLE:
+            if self.current_operation == Operation.SELECT:
+                return OperationTransition.IDLE_TO_SELECT
+            if self.current_operation == Operation.PAN_LEFTHAND:
+                return OperationTransition.IDLE_TO_PANLEFT
+            if self.current_operation == Operation.PAN_RIGHTHAND:
+                return OperationTransition.IDLE_TO_PANRIGHT
+            if self.current_operation == Operation.ZOOM:
+                return OperationTransition.IDLE_TO_ZOOM
+
+    def process_transition(self, transition: OperationTransition, x_left: int, y_left: int, x_right: int, y_right: int):
+        if transition == OperationTransition.REMAINS:
+            return
+        if transition == OperationTransition.SELECT_TO_PANLEFT:
+            return
+        if transition == OperationTransition.SELECT_TO_PANRIGHT:
+            return
+        if transition == OperationTransition.SELECT_TO_ZOOM:
+            return
+        if transition == OperationTransition.SELECT_TO_POINTING:
+            return
+        if transition == OperationTransition.SELECT_TO_IDLE:
+            return
+        if transition == OperationTransition.PANLEFT_TO_SELECT:
+            return
+        if transition == OperationTransition.PANLEFT_TO_PANRIGHT:
+            return
+        if transition == OperationTransition.PANLEFT_TO_ZOOM:
+            return
+        if transition == OperationTransition.PANLEFT_TO_POINTING:
+            return
+        if transition == OperationTransition.PANLEFT_TO_IDLE:
+            return
+        if transition == OperationTransition.PANRIGHT_TO_SELECT:
+            tc.finger_up()
+            return
+        if transition == OperationTransition.PANRIGHT_TO_PANLEFT:
+            tc.finger_up()
+            return
+        if transition == OperationTransition.PANRIGHT_TO_ZOOM:
+            tc.finger_up()
+            return
+        if transition == OperationTransition.PANRIGHT_TO_POINTING:
+            tc.finger_up()
+            return
+        if transition == OperationTransition.PANRIGHT_TO_IDLE:
+            tc.finger_up()
+            return
+        if transition == OperationTransition.ZOOM_TO_SELECT:
+            return
+        if transition == OperationTransition.ZOOM_TO_PANLEFT:
+            return
+        if transition == OperationTransition.ZOOM_TO_PANRIGHT:
+            return
+        if transition == OperationTransition.ZOOM_TO_POINTING:
+            return
+        if transition == OperationTransition.ZOOM_TO_IDLE:
+            return
+        if transition == OperationTransition.POINTING_TO_SELECT:
+            return
+        if transition == OperationTransition.POINTING_TO_PANLEFT:
+            return
+        if transition == OperationTransition.POINTING_TO_PANRIGHT:
+            return
+        if transition == OperationTransition.POINTING_TO_ZOOM:
+            return
+        if transition == OperationTransition.IDLE_TO_SELECT:
+            return
+        if transition == OperationTransition.IDLE_TO_PANLEFT:
+            return
+        if transition == OperationTransition.IDLE_TO_PANRIGHT:
+            tc.finger_down((1920 - x_right, y_right))
+            self.prev_righthand_pointing = (x_right, y_right)
+            return
+        if transition == OperationTransition.IDLE_TO_ZOOM:
+            return
+        if transition == OperationTransition.IDLE_TO_POINTING:
+            return
+
+    def process_operation(self, x_left: int, y_left: int, x_right: int, y_right: int):
+        if self.current_operation == Operation.PAN_RIGHTHAND:
+            self.pan_righthand(x_right, y_right)
+
     def pan_righthand(self, x: int, y: int):
-        if self.prev_righthand_pointing is None:
-            self.prev_righthand_pointing = (x, y)
-            tc.finger_down((x, y))
-            print("engage")
-        else:
-            print("moving")
-            tc.move_finger((1920 - (self.prev_righthand_pointing[0]-x), self.prev_righthand_pointing[1]-y))
+        tc.move_finger((self.prev_righthand_pointing[0]-x, y - self.prev_righthand_pointing[1]))
+        self.prev_righthand_pointing = (x, y)
 
     def pan_lefthand(self, x: int, y: int):
         pass

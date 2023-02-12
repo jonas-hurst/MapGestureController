@@ -11,10 +11,15 @@ class MainWindow(GuibaseExtended):
     def __init__(self, parent):
         GuibaseExtended.__init__(self, parent)
 
-        self.screen = Screen(0,
-                             geom.Point3D(-1100, -1150, -340),
-                             geom.Point3D(1100, 130, -340),
-                             1920, 1080)
+        screen_above = Screen(0,
+                              geom.Point3D(-1100, -1150, -340),
+                              geom.Point3D(1100, 130, -340),
+                              1920, 1080)
+        screen_below = Screen(0,
+                              geom.Point3D(-1100, 0, 0),
+                              geom.Point3D(1100, 1280, 0),
+                              1920, 1080)
+        self.screen = screen_below
 
         self.touch_control_enabled = False
 
@@ -311,7 +316,7 @@ class MainWindow(GuibaseExtended):
             return
         if transition == OperationTransition.PANLEFT_TO_ZOOM:
             tc.finger_up()
-            self.prev_lefthand_pointing = None
+            self.transition_to_zoom(x_left, y_left, x_right, y_right)
             return
         if transition == OperationTransition.PANLEFT_TO_POINTING:
             tc.finger_up()
@@ -331,7 +336,7 @@ class MainWindow(GuibaseExtended):
             return
         if transition == OperationTransition.PANRIGHT_TO_ZOOM:
             tc.finger_up()
-            self.prev_righthand_pointing = None
+            self.transition_to_zoom(x_left, y_left, x_right, y_right)
             return
         if transition == OperationTransition.PANRIGHT_TO_POINTING:
             tc.finger_up()
@@ -344,12 +349,16 @@ class MainWindow(GuibaseExtended):
         if transition == OperationTransition.ZOOM_TO_SELECT:
             return
         if transition == OperationTransition.ZOOM_TO_PANLEFT:
+            self.transition_from_zoom()
             return
         if transition == OperationTransition.ZOOM_TO_PANRIGHT:
+            self.transition_from_zoom()
             return
         if transition == OperationTransition.ZOOM_TO_POINTING:
+            self.transition_from_zoom()
             return
         if transition == OperationTransition.ZOOM_TO_IDLE:
+            self.transition_from_zoom()
             return
         if transition == OperationTransition.POINTING_TO_SELECT:
             return
@@ -370,9 +379,20 @@ class MainWindow(GuibaseExtended):
             self.prev_righthand_pointing = (x_right, y_right)
             return
         if transition == OperationTransition.IDLE_TO_ZOOM:
+            self.transition_to_zoom(x_left, y_left, x_right, y_right)
             return
         if transition == OperationTransition.IDLE_TO_POINTING:
             return
+
+    def transition_from_zoom(self):
+        tc.two_fingers_up()
+        self.prev_righthand_pointing = None
+        self.prev_lefthand_pointing = None
+
+    def transition_to_zoom(self, x_left, y_left, x_right, y_right):
+        tc.two_fingers_down((1920 - x_left, y_left), (1920 - x_right, y_right))
+        self.prev_righthand_pointing = (x_right, y_right)
+        self.prev_lefthand_pointing = (x_left, y_left)
 
     def process_operation(self, x_left: int, y_left: int, x_right: int, y_right: int):
         if self.current_operation == Operation.PAN_RIGHTHAND:
@@ -380,6 +400,9 @@ class MainWindow(GuibaseExtended):
 
         if self.current_operation == Operation.PAN_LEFTHAND:
             self.pan_lefthand(x_left, y_left)
+
+        if self.current_operation == Operation.ZOOM:
+            self.zoom(x_left, y_left, x_right, y_right)
 
     def pan_righthand(self, x: int, y: int):
         if self.prev_righthand_pointing is None:
@@ -393,10 +416,16 @@ class MainWindow(GuibaseExtended):
             self.prev_lefthand_pointing = (1920 - x, y)
         tc.move_finger((self.prev_lefthand_pointing[0]-x, y-self.prev_lefthand_pointing[1]))
         self.prev_lefthand_pointing = (x, y)
-        pass
 
-    def zoom(self):
-        pass
+    def zoom(self, x_left, y_left, x_right, y_right):
+        if self.prev_lefthand_pointing is None:
+            self.prev_lefthand_pointing = (1920 - x_left, y_left)
+        if self.prev_righthand_pointing is None:
+            self.prev_righthand_pointing = (1920 - x_right, y_right)
+        tc.move_two_fingers((self.prev_lefthand_pointing[0]-x_left, y_left-self.prev_lefthand_pointing[1]),
+                            (self.prev_righthand_pointing[0]-x_right, y_right - self.prev_righthand_pointing[1]))
+        self.prev_lefthand_pointing = (x_left, y_left)
+        self.prev_righthand_pointing = (x_right, y_right)
 
 
 class CalibrateDialogWindow(CalibrateDialogExtended):

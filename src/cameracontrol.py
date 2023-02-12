@@ -31,7 +31,7 @@ class BodyResult:
         self.left_elbow: geom.Point3D = geom.Point3D(body.joints[pykinect.K4ABT_JOINT_ELBOW_LEFT].position.x,
                                                      body.joints[pykinect.K4ABT_JOINT_ELBOW_LEFT].position.y,
                                                      body.joints[pykinect.K4ABT_JOINT_ELBOW_LEFT].position.z)
-        self.left_pointer: geom.Line = geom.Line.from_points(self.nose, self.left_hand_tip)
+        self.left_pointer: geom.Line = geom.Line.from_points(self.nose, self.left_hand)
 
         self.right_hand_state: HandState = right_hand_state
         self.right_hand_tip: geom.Point3D = geom.Point3D(body.joints[pykinect.K4ABT_JOINT_HANDTIP_RIGHT].position.x,

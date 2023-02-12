@@ -168,7 +168,8 @@ class MainWindow(GuibaseExtended):
 
         # After here only if if hand points to screen is on screen
         self.previous_operation = self.current_operation
-        self.current_operation = self.detect_operation(bodyresult)
+        # self.current_operation = self.detect_operation_handstate(bodyresult)
+        self.current_operation = self.detect_operation_distance(bodyresult, left_hand_pointing_to_screen, right_hand_pointing_to_screen)
 
         operation_transition: OperationTransition = self.get_operation_transition()
 
@@ -195,7 +196,7 @@ class MainWindow(GuibaseExtended):
 
         return screen_x, screen_y
 
-    def detect_operation(self, bodyresult: BodyResult) -> Operation:
+    def detect_operation_handstate(self, bodyresult: BodyResult) -> Operation:
         # if bodyresult.right_hand_state == HandState.CLOSED and bodyresult.left_hand_state != HandState.CLOSED:
         #     return Operation.PAN_RIGHTHAND
         # if bodyresult.left_hand_state == HandState.CLOSED and bodyresult.right_hand_state != HandState.CLOSED:
@@ -204,6 +205,18 @@ class MainWindow(GuibaseExtended):
         #     return Operation.ZOOM
         if bodyresult.right_hand_state == HandState.CLOSED:
             return Operation.PAN_RIGHTHAND
+        return Operation.IDLE
+
+    def detect_operation_distance(self, bodyresult: BodyResult, left_pointing: bool, right_pointing: bool) -> Operation:
+        active_dist = 400
+        dist_nose_right = bodyresult.nose.distance(bodyresult.right_hand)
+        dist_nose_left = bodyresult.nose.distance(bodyresult.left_hand)
+        if dist_nose_right > active_dist and right_pointing and not left_pointing:
+            return Operation.PAN_RIGHTHAND
+        if dist_nose_left > active_dist and left_pointing and not right_pointing:
+            return Operation.PAN_LEFTHAND
+        if left_pointing and right_pointing and dist_nose_right > active_dist and dist_nose_left > active_dist:
+            return Operation.ZOOM
         return Operation.IDLE
 
     def get_operation_transition(self) -> OperationTransition:

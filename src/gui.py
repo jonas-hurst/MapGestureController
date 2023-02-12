@@ -11,15 +11,32 @@ class MainWindow(GuibaseExtended):
     def __init__(self, parent):
         GuibaseExtended.__init__(self, parent)
 
-        screen_above = Screen(0,
-                              geom.Point3D(-1100, -1150, -340),
-                              geom.Point3D(1100, 130, -340),
-                              1920, 1080)
-        screen_below = Screen(0,
-                              geom.Point3D(-1100, 0, 0),
-                              geom.Point3D(1100, 1280, 0),
-                              1920, 1080)
-        self.screen = screen_below
+        # Two different Screen setup templates: Single Screen and 3-Display-Multiscreen. Set your screen in self.screens
+        # Screen coordinates with respect to Azure Kinect depth coordinate system
+        # Single Screen setup: One Screen underneath the Camera
+        screen_single_below: tuple[Screen] = (Screen(3,
+                                                     geom.Point3D(-1100, 0, 0),
+                                                     geom.Point3D(1100, 1280, 0),
+                                                     1920, 1200),)
+
+        # Multi-Screen Setup: IVE Screens
+        screens_ive: tuple[Screen, Screen, Screen] = (
+            Screen(0,
+                   geom.Point3D(1100, -640, 0),
+                   geom.Point3D(1209,  640, 1890),
+                   1920, 1080),
+            Screen(1,
+                   geom.Point3D(-1100, -640, 0),
+                   geom.Point3D( 1100,  640, 0),
+                   1920, 1080),
+            Screen(2,
+                   geom.Point3D(-1209, -640, 0),
+                   geom.Point3D(-1100,  640, 1890),
+                   1920, 1080)
+        )
+        self.screens = screens_ive
+
+        self.screen_total_width = sum([screen.px_width for screen in self.screens])
 
         self.touch_control_enabled = False
 
@@ -196,21 +213,43 @@ class MainWindow(GuibaseExtended):
     def get_screen_intersection(self, pointer: geom.Line) -> tuple[int, int]:
         # Calculate the point in 3D-space wehre pointer-line and infinite screen-plain intersect
         # A check whether this point is on screen occurs later
-        try:
-            pnt = self.screen.screen_plain.intersect_line(pointer)
-        except geom.ParallelError:
-            print("PARALLEL ERROR")
+        screen_id = -1
+        for screen in self.screens:
+            try:
+                pnt = screen.screen_plain.intersect_line(pointer)
+            except geom.ParallelError:
+                continue
+
+            # If line-plain intersection point is on screen, try-block is executed
+            # If it is not, except block executes.
+            try:
+                screen_x, screen_y = screen.coords_to_px(pnt)
+                screen_id = screen.screen_id
+            except ValueError:
+                continue
+
+        # TODO: Properly calculate screen coordinates
+        # Currently, this is hard-coded to specific setups
+
+        # No intersection with any screen
+        if screen_id == -1:
             return -1, -1
 
-        # If line-plain intersection point is on screen, try-block is executed
-        # If it is not, except block executes.
-        try:
-            screen_x, screen_y = self.screen.coords_to_px(pnt)
+        if screen_id == 0:
+            return 2 * 1920 + screen_x, screen_y
 
-        except ValueError:
-            return -1, -1
+        if screen_id == 1:
+            return 1920 + screen_x, screen_y
 
-        return screen_x, screen_y
+        if screen_id == 2:
+            return 1920 - screen_x, screen_y
+
+        if screen_id == 3:
+            return screen_x, screen_y
+
+        print(screen_id)
+        # return screen_x, screen_y
+        return -1, -1
 
     def detect_operation_handstate(self, bodyresult: BodyResult) -> Operation:
         # if bodyresult.right_hand_state == HandState.CLOSED and bodyresult.left_hand_state != HandState.CLOSED:
@@ -371,11 +410,11 @@ class MainWindow(GuibaseExtended):
         if transition == OperationTransition.IDLE_TO_SELECT:
             return
         if transition == OperationTransition.IDLE_TO_PANLEFT:
-            tc.finger_down((1920 - x_left, x_left))
+            tc.finger_down((self.screen_total_width - x_left, x_left))
             self.prev_lefthand_pointing = (x_left, y_left)
             return
         if transition == OperationTransition.IDLE_TO_PANRIGHT:
-            tc.finger_down((1920 - x_right, y_right))
+            tc.finger_down((self.screen_total_width - x_right, y_right))
             self.prev_righthand_pointing = (x_right, y_right)
             return
         if transition == OperationTransition.IDLE_TO_ZOOM:
@@ -390,7 +429,7 @@ class MainWindow(GuibaseExtended):
         self.prev_lefthand_pointing = None
 
     def transition_to_zoom(self, x_left, y_left, x_right, y_right):
-        tc.two_fingers_down((1920 - x_left, y_left), (1920 - x_right, y_right))
+        tc.two_fingers_down((self.screen_total_width - x_left, y_left), (self.screen_total_width - x_right, y_right))
         self.prev_righthand_pointing = (x_right, y_right)
         self.prev_lefthand_pointing = (x_left, y_left)
 
@@ -406,22 +445,21 @@ class MainWindow(GuibaseExtended):
 
     def pan_righthand(self, x: int, y: int):
         if self.prev_righthand_pointing is None:
-            self.prev_righthand_pointing = (1920 - x, y)
+            self.prev_righthand_pointing = (self.screen_total_width - x, y)
         tc.move_finger((self.prev_righthand_pointing[0]-x, y - self.prev_righthand_pointing[1]))
         self.prev_righthand_pointing = (x, y)
 
     def pan_lefthand(self, x: int, y: int):
-        print("leftpan")
         if self.prev_lefthand_pointing is None:
-            self.prev_lefthand_pointing = (1920 - x, y)
+            self.prev_lefthand_pointing = (self.screen_total_width - x, y)
         tc.move_finger((self.prev_lefthand_pointing[0]-x, y-self.prev_lefthand_pointing[1]))
         self.prev_lefthand_pointing = (x, y)
 
     def zoom(self, x_left, y_left, x_right, y_right):
         if self.prev_lefthand_pointing is None:
-            self.prev_lefthand_pointing = (1920 - x_left, y_left)
+            self.prev_lefthand_pointing = (self.screen_total_width - x_left, y_left)
         if self.prev_righthand_pointing is None:
-            self.prev_righthand_pointing = (1920 - x_right, y_right)
+            self.prev_righthand_pointing = (self.screen_total_width - x_right, y_right)
         tc.move_two_fingers((self.prev_lefthand_pointing[0]-x_left, y_left-self.prev_lefthand_pointing[1]),
                             (self.prev_righthand_pointing[0]-x_right, y_right - self.prev_righthand_pointing[1]))
         self.prev_lefthand_pointing = (x_left, y_left)

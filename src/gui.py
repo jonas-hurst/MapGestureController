@@ -128,6 +128,7 @@ class MainWindow(GuibaseExtended):
                 message["left"]["present"] = False
                 tc.finger_up()
                 self.prev_righthand_pointing = None
+                self.prev_lefthand_pointing = None
 
             self.infodata["operation"] = self.current_operation.name
 
@@ -145,23 +146,33 @@ class MainWindow(GuibaseExtended):
         self.infodata["cut"] = self.__tracker_controller.minCutoff
         self.infodata["beta"] = self.__tracker_controller.beta
 
+        # Check if Right hand is pointing towards the screen
         screen_x_r, screen_y_r = self.get_screen_intersection(bodyresult.right_pointer)
+        right_hand_pointing_to_screen = False
         if screen_x_r == -1 and screen_y_r == -1:
             message["right"]["present"] = False
+            self.prev_righthand_pointing = None
         else:
             message["right"]["present"] = True
             message["right"]["position"]["x"] = screen_x_r
             message["right"]["position"]["y"] = screen_y_r
+            right_hand_pointing_to_screen = True
 
+        # Check if Left hand is pointing towards the screen
         screen_x_l, screen_y_l = self.get_screen_intersection(bodyresult.left_pointer)
+        left_hand_pointing_to_screen = False
         if screen_x_l == -1 and screen_y_l == -1:
             message["left"]["present"] = False
+            self.prev_lefthand_pointing = None
         else:
             message["left"]["present"] = True
             message["left"]["position"]["x"] = screen_x_l
             message["left"]["position"]["y"] = screen_y_l
+            left_hand_pointing_to_screen = True
 
-        if screen_x_r == -1 and screen_y_r == -1 and screen_x_l == -1 and screen_y_l == -1:
+        # Check if at least one hand is pointing to the screen.
+        # If not, exit this method
+        if not right_hand_pointing_to_screen and not left_hand_pointing_to_screen:
             self.previous_operation = self.current_operation
             self.current_operation = Operation.IDLE
             return
@@ -291,29 +302,44 @@ class MainWindow(GuibaseExtended):
         if transition == OperationTransition.SELECT_TO_IDLE:
             return
         if transition == OperationTransition.PANLEFT_TO_SELECT:
+            tc.finger_up()
+            self.prev_lefthand_pointing = None
             return
         if transition == OperationTransition.PANLEFT_TO_PANRIGHT:
+            tc.finger_up()
+            self.prev_lefthand_pointing = None
             return
         if transition == OperationTransition.PANLEFT_TO_ZOOM:
+            tc.finger_up()
+            self.prev_lefthand_pointing = None
             return
         if transition == OperationTransition.PANLEFT_TO_POINTING:
+            tc.finger_up()
+            self.prev_lefthand_pointing = None
             return
         if transition == OperationTransition.PANLEFT_TO_IDLE:
+            tc.finger_up()
+            self.prev_lefthand_pointing = None
             return
         if transition == OperationTransition.PANRIGHT_TO_SELECT:
             tc.finger_up()
+            self.prev_righthand_pointing = None
             return
         if transition == OperationTransition.PANRIGHT_TO_PANLEFT:
             tc.finger_up()
+            self.prev_righthand_pointing = None
             return
         if transition == OperationTransition.PANRIGHT_TO_ZOOM:
             tc.finger_up()
+            self.prev_righthand_pointing = None
             return
         if transition == OperationTransition.PANRIGHT_TO_POINTING:
             tc.finger_up()
+            self.prev_righthand_pointing = None
             return
         if transition == OperationTransition.PANRIGHT_TO_IDLE:
             tc.finger_up()
+            self.prev_righthand_pointing = None
             return
         if transition == OperationTransition.ZOOM_TO_SELECT:
             return
@@ -336,6 +362,8 @@ class MainWindow(GuibaseExtended):
         if transition == OperationTransition.IDLE_TO_SELECT:
             return
         if transition == OperationTransition.IDLE_TO_PANLEFT:
+            tc.finger_down((1920 - x_left, x_left))
+            self.prev_lefthand_pointing = (x_left, y_left)
             return
         if transition == OperationTransition.IDLE_TO_PANRIGHT:
             tc.finger_down((1920 - x_right, y_right))
@@ -350,11 +378,21 @@ class MainWindow(GuibaseExtended):
         if self.current_operation == Operation.PAN_RIGHTHAND:
             self.pan_righthand(x_right, y_right)
 
+        if self.current_operation == Operation.PAN_LEFTHAND:
+            self.pan_lefthand(x_left, y_left)
+
     def pan_righthand(self, x: int, y: int):
+        if self.prev_righthand_pointing is None:
+            self.prev_righthand_pointing = (1920 - x, y)
         tc.move_finger((self.prev_righthand_pointing[0]-x, y - self.prev_righthand_pointing[1]))
         self.prev_righthand_pointing = (x, y)
 
     def pan_lefthand(self, x: int, y: int):
+        print("leftpan")
+        if self.prev_lefthand_pointing is None:
+            self.prev_lefthand_pointing = (1920 - x, y)
+        tc.move_finger((self.prev_lefthand_pointing[0]-x, y-self.prev_lefthand_pointing[1]))
+        self.prev_lefthand_pointing = (x, y)
         pass
 
     def zoom(self):

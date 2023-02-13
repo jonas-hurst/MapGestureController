@@ -323,52 +323,46 @@ class MainWindow(GuibaseExtended):
         if transition == OperationTransition.SELECT_TO_IDLE:
             return
         if transition == OperationTransition.PANLEFT_TO_SELECT:
-            tc.finger_up()
-            self.prev_lefthand_pointing = None
+            self.transition_from_panleft()
             return
         if transition == OperationTransition.PANLEFT_TO_PANRIGHT:
-            tc.finger_up()
-            self.prev_lefthand_pointing = None
+            self.transition_from_panleft()
             return
         if transition == OperationTransition.PANLEFT_TO_ZOOM:
-            tc.finger_up()
+            self.transition_from_panleft()
             self.transition_to_zoom(x_left, y_left, x_right, y_right)
             return
         if transition == OperationTransition.PANLEFT_TO_POINTING:
-            tc.finger_up()
-            self.prev_lefthand_pointing = None
+            self.transition_from_panleft()
             return
         if transition == OperationTransition.PANLEFT_TO_IDLE:
-            tc.finger_up()
-            self.prev_lefthand_pointing = None
+            self.transition_from_panleft()
             return
         if transition == OperationTransition.PANRIGHT_TO_SELECT:
-            tc.finger_up()
-            self.prev_righthand_pointing = None
+            self.transition_from_panright()
             return
         if transition == OperationTransition.PANRIGHT_TO_PANLEFT:
-            tc.finger_up()
-            self.prev_righthand_pointing = None
+            self.transition_from_panright()
             return
         if transition == OperationTransition.PANRIGHT_TO_ZOOM:
-            tc.finger_up()
+            self.transition_from_panright()
             self.transition_to_zoom(x_left, y_left, x_right, y_right)
             return
         if transition == OperationTransition.PANRIGHT_TO_POINTING:
-            tc.finger_up()
-            self.prev_righthand_pointing = None
+            self.transition_from_panright()
             return
         if transition == OperationTransition.PANRIGHT_TO_IDLE:
-            tc.finger_up()
-            self.prev_righthand_pointing = None
+            self.transition_from_panright()
             return
         if transition == OperationTransition.ZOOM_TO_SELECT:
             return
         if transition == OperationTransition.ZOOM_TO_PANLEFT:
             self.transition_from_zoom()
+            self.transition_to_panleft(x_left, y_left)
             return
         if transition == OperationTransition.ZOOM_TO_PANRIGHT:
             self.transition_from_zoom()
+            self.transition_to_panrigth(x_right, y_right)
             return
         if transition == OperationTransition.ZOOM_TO_POINTING:
             self.transition_from_zoom()
@@ -387,18 +381,32 @@ class MainWindow(GuibaseExtended):
         if transition == OperationTransition.IDLE_TO_SELECT:
             return
         if transition == OperationTransition.IDLE_TO_PANLEFT:
-            tc.finger_down((self.screen_total_width - x_left, x_left))
-            self.prev_lefthand_pointing = (x_left, y_left)
+            self.transition_to_panleft(x_left, y_left)
             return
         if transition == OperationTransition.IDLE_TO_PANRIGHT:
-            tc.finger_down((self.screen_total_width - x_right, y_right))
-            self.prev_righthand_pointing = (x_right, y_right)
+            self.transition_to_panrigth(x_right, y_right)
             return
         if transition == OperationTransition.IDLE_TO_ZOOM:
             self.transition_to_zoom(x_left, y_left, x_right, y_right)
             return
         if transition == OperationTransition.IDLE_TO_POINTING:
             return
+
+    def transition_to_panleft(self, x_left: int, y_left: int):
+        tc.finger_down((self.screen_total_width - x_left, y_left))
+        self.prev_lefthand_pointing = (x_left, y_left)
+
+    def transition_from_panleft(self):
+        tc.finger_up()
+        self.prev_lefthand_pointing = None
+
+    def transition_to_panrigth(self, x_right: int, y_right: int):
+        tc.finger_down((self.screen_total_width - x_right, y_right))
+        self.prev_righthand_pointing = (x_right, y_right)
+
+    def transition_from_panright(self):
+        tc.finger_up()
+        self.prev_righthand_pointing = None
 
     def transition_from_zoom(self):
         tc.two_fingers_up()

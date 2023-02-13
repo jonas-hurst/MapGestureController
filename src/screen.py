@@ -93,6 +93,38 @@ class Screen:
         pass
 
 
+# Different Screen setup templates: Single Screen and 3-Display-Multiscreen. Set your screen in self.screens
+# Screen coordinates with respect to Azure Kinect depth coordinate system
+
+# Single Screen setup: One Screen underneath the Camera
+SCREEN_SINGLE_BELOW: tuple[Screen] = (Screen(3,
+                                             Point3D(-1100, 0, 0),
+                                             Point3D(1100, 1280, 0),
+                                             1920, 1200),)
+
+
+# Single Screen setup: One screen above the camera
+SCREEN_SINGLE_ABOVE: tuple[Screen] = (Screen(3,
+                                             Point3D(-1100, -1280, 0),
+                                             Point3D( 1100,     0, 0),
+                                             1920, 1200),)
+
+# Multi-Screen Setup: IVE Screens
+SCREENS_IVE: tuple[Screen, Screen, Screen] = (
+    Screen(0,
+           Point3D(1100, -640, 0),
+           Point3D(1209,  640, 1890),
+           1920, 1080),
+    Screen(1,
+           Point3D(-1100, -640, 0),
+           Point3D( 1100,  640, 0),
+           1920, 1080),
+    Screen(2,
+           Point3D(-1209, -640, 0),
+           Point3D(-1100,  640, 1890),
+           1920, 1080)
+)
+
 if __name__ == "__main__":
     s = Screen(1,
                Point3D(-1.5, -1,   -0.5),

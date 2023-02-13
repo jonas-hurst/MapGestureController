@@ -1,6 +1,6 @@
 from guibaseExtended import GuibaseExtended, CalibrateDialogExtended
 from cameracontrol import *
-from screen import Screen
+from screen import *
 import geom
 from websocketserver import Server
 from constants import *
@@ -11,30 +11,7 @@ class MainWindow(GuibaseExtended):
     def __init__(self, parent):
         GuibaseExtended.__init__(self, parent)
 
-        # Two different Screen setup templates: Single Screen and 3-Display-Multiscreen. Set your screen in self.screens
-        # Screen coordinates with respect to Azure Kinect depth coordinate system
-        # Single Screen setup: One Screen underneath the Camera
-        screen_single_below: tuple[Screen] = (Screen(3,
-                                                     geom.Point3D(-1100, 0, 0),
-                                                     geom.Point3D(1100, 1280, 0),
-                                                     1920, 1200),)
-
-        # Multi-Screen Setup: IVE Screens
-        screens_ive: tuple[Screen, Screen, Screen] = (
-            Screen(0,
-                   geom.Point3D(1100, -640, 0),
-                   geom.Point3D(1209,  640, 1890),
-                   1920, 1080),
-            Screen(1,
-                   geom.Point3D(-1100, -640, 0),
-                   geom.Point3D( 1100,  640, 0),
-                   1920, 1080),
-            Screen(2,
-                   geom.Point3D(-1209, -640, 0),
-                   geom.Point3D(-1100,  640, 1890),
-                   1920, 1080)
-        )
-        self.screens = screens_ive
+        self.screens = SCREEN_SINGLE_ABOVE
 
         self.screen_total_width = sum([screen.px_width for screen in self.screens])
 

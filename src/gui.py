@@ -179,7 +179,8 @@ class MainWindow(GuibaseExtended):
         # After here only if if hand points to screen is on screen
         self.previous_operation = self.current_operation
         # self.current_operation = self.detect_operation_handstate(bodyresult)
-        self.current_operation = self.detect_operation_distance(bodyresult, left_hand_pointing_to_screen, right_hand_pointing_to_screen)
+        # self.current_operation = self.detect_operation_distance(bodyresult, left_hand_pointing_to_screen, right_hand_pointing_to_screen)
+        self.current_operation = self.detect_operation_angle(bodyresult, left_hand_pointing_to_screen, right_hand_pointing_to_screen)
 
         operation_transition: OperationTransition = self.get_operation_transition()
 
@@ -255,6 +256,22 @@ class MainWindow(GuibaseExtended):
         if dist_nose_right > active_dist and right_pointing:
             return Operation.PAN_RIGHTHAND
         if dist_nose_left > active_dist and left_pointing:
+            return Operation.PAN_LEFTHAND
+        return Operation.IDLE
+
+    def detect_operation_angle(self, bodyresult: BodyResult, left_pointing: bool, right_pointing: bool) -> Operation:
+        """
+        Detect an operatino based on the angle formed at elbow
+        :param bodyresult: object containnig resutls from bodytracking
+        :param left_pointing: Bool value indicating if left hand is pointing to screen
+        :param right_pointing: Bool value indicating if right hand is pointing to screen
+        :return: The detected Operation
+        """
+        if left_pointing and right_pointing and bodyresult.left_elbow_angle > 120 and bodyresult.right_elbow_angle > 120:
+            return Operation.ZOOM
+        if right_pointing and bodyresult.right_elbow_angle > 120:
+            return Operation.PAN_RIGHTHAND
+        if left_pointing and bodyresult.left_elbow_angle > 120:
             return Operation.PAN_LEFTHAND
         return Operation.IDLE
 

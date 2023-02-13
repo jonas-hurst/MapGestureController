@@ -240,15 +240,22 @@ class MainWindow(GuibaseExtended):
         return Operation.IDLE
 
     def detect_operation_distance(self, bodyresult: BodyResult, left_pointing: bool, right_pointing: bool) -> Operation:
+        """
+        Detect an operation based on distance of hand to something
+        :param bodyresult: object containing results from bodytracking
+        :param left_pointing: Bool Value indicating if left hand is pointing to screen
+        :param right_pointing: Bool Value indicating if right hand is pointing to screen
+        :return: The detected Operation
+        """
         active_dist = 400
-        dist_nose_right = bodyresult.nose.distance(bodyresult.right_hand)
-        dist_nose_left = bodyresult.nose.distance(bodyresult.left_hand)
-        if dist_nose_right > active_dist and right_pointing and not left_pointing:
-            return Operation.PAN_RIGHTHAND
-        if dist_nose_left > active_dist and left_pointing and not right_pointing:
-            return Operation.PAN_LEFTHAND
+        dist_nose_right = bodyresult.chest.distance(bodyresult.right_hand)
+        dist_nose_left = bodyresult.chest.distance(bodyresult.left_hand)
         if left_pointing and right_pointing and dist_nose_right > active_dist and dist_nose_left > active_dist:
             return Operation.ZOOM
+        if dist_nose_right > active_dist and right_pointing:
+            return Operation.PAN_RIGHTHAND
+        if dist_nose_left > active_dist and left_pointing:
+            return Operation.PAN_LEFTHAND
         return Operation.IDLE
 
     def get_operation_transition(self) -> OperationTransition:

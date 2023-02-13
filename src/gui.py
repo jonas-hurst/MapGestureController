@@ -178,9 +178,9 @@ class MainWindow(GuibaseExtended):
 
         # After here only if if hand points to screen is on screen
         self.previous_operation = self.current_operation
-        # self.current_operation = self.detect_operation_handstate(bodyresult)
+        self.current_operation = self.detect_operation_handstate(bodyresult, left_hand_pointing_to_screen, right_hand_pointing_to_screen)
         # self.current_operation = self.detect_operation_distance(bodyresult, left_hand_pointing_to_screen, right_hand_pointing_to_screen)
-        self.current_operation = self.detect_operation_angle(bodyresult, left_hand_pointing_to_screen, right_hand_pointing_to_screen)
+        # self.current_operation = self.detect_operation_angle(bodyresult, left_hand_pointing_to_screen, right_hand_pointing_to_screen)
 
         operation_transition: OperationTransition = self.get_operation_transition()
 
@@ -229,15 +229,13 @@ class MainWindow(GuibaseExtended):
         # return screen_x, screen_y
         return -1, -1
 
-    def detect_operation_handstate(self, bodyresult: BodyResult) -> Operation:
-        # if bodyresult.right_hand_state == HandState.CLOSED and bodyresult.left_hand_state != HandState.CLOSED:
-        #     return Operation.PAN_RIGHTHAND
-        # if bodyresult.left_hand_state == HandState.CLOSED and bodyresult.right_hand_state != HandState.CLOSED:
-        #     return Operation.PAN_LEFTHAND
-        # if bodyresult.left_hand_state == HandState.CLOSED and bodyresult.right_hand_state == HandState.CLOSED:
-        #     return Operation.ZOOM
-        if bodyresult.right_hand_state == HandState.CLOSED:
+    def detect_operation_handstate(self, bodyresult: BodyResult, left_pointing: bool, right_pointing: bool) -> Operation:
+        if left_pointing and right_pointing and bodyresult.right_hand_state == HandState.CLOSED and bodyresult.left_hand_state == HandState.CLOSED:
+            return Operation.ZOOM
+        if bodyresult.right_hand_state == HandState.CLOSED and right_pointing:
             return Operation.PAN_RIGHTHAND
+        if bodyresult.left_hand_state == HandState.CLOSED and left_pointing:
+            return Operation.PAN_LEFTHAND
         return Operation.IDLE
 
     def detect_operation_distance(self, bodyresult: BodyResult, left_pointing: bool, right_pointing: bool) -> Operation:

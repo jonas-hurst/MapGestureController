@@ -2,6 +2,8 @@
 A module for handling geometries in 3D space
 """
 from __future__ import annotations
+
+import math
 from numbers import Real
 import numpy as np
 
@@ -77,6 +79,15 @@ class Vector3D:
         :return: The magnitude
         """
         return np.linalg.norm(self.coords)
+
+    def get_angle(self, vector: Vector3D) -> float:
+        """
+        Calculates the angle between this and another vector.
+        :param vector: The other vector
+        :return: The angle
+        """
+        a = math.acos(np.dot(self.coords, vector.coords) / (self.get_magnitude() * vector.get_magnitude()))
+        return a
 
     @staticmethod
     def check_parallel(v1: Vector3D, v2: Vector3D, epsilon: float = 0.0001) -> bool:

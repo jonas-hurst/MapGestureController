@@ -21,6 +21,10 @@ class BodyResult:
                                                body.joints[pykinect.K4ABT_JOINT_NOSE].position.y,
                                                body.joints[pykinect.K4ABT_JOINT_NOSE].position.z)
 
+        self.chest: geom.Point3D = geom.Point3D(body.joints[pykinect.K4ABT_JOINT_SPINE_CHEST].position.x,
+                                                body.joints[pykinect.K4ABT_JOINT_SPINE_CHEST].position.y,
+                                                body.joints[pykinect.K4ABT_JOINT_SPINE_CHEST].position.z)
+
         self.left_hand_state: HandState = left_hand_state
         self.left_hand_tip: geom.Point3D = geom.Point3D(body.joints[pykinect.K4ABT_JOINT_HANDTIP_LEFT].position.x,
                                                         body.joints[pykinect.K4ABT_JOINT_HANDTIP_LEFT].position.y,
@@ -31,7 +35,15 @@ class BodyResult:
         self.left_elbow: geom.Point3D = geom.Point3D(body.joints[pykinect.K4ABT_JOINT_ELBOW_LEFT].position.x,
                                                      body.joints[pykinect.K4ABT_JOINT_ELBOW_LEFT].position.y,
                                                      body.joints[pykinect.K4ABT_JOINT_ELBOW_LEFT].position.z)
-        self.left_pointer: geom.Line = geom.Line.from_points(self.nose, self.left_hand)
+        self.left_shoulder: geom.Point3D = geom.Point3D(body.joints[pykinect.K4ABT_JOINT_SHOULDER_LEFT].position.x,
+                                                        body.joints[pykinect.K4ABT_JOINT_SHOULDER_LEFT].position.y,
+                                                        body.joints[pykinect.K4ABT_JOINT_SHOULDER_LEFT].position.z)
+        self.left_pointer: geom.Line = geom.Line.from_points(self.chest, self.left_hand)
+
+        # calculate elbow angle for left arm
+        v_elbow_hand_l = geom.Vector3D.from_points(self.left_elbow, self.left_hand)
+        v_elbow_shoulder_l = geom.Vector3D.from_points(self.left_elbow, self.left_shoulder)
+        self.left_elbow_angle = v_elbow_hand_l.get_angle(v_elbow_shoulder_l) * (180 / math.pi)
 
         self.right_hand_state: HandState = right_hand_state
         self.right_hand_tip: geom.Point3D = geom.Point3D(body.joints[pykinect.K4ABT_JOINT_HANDTIP_RIGHT].position.x,
@@ -43,7 +55,15 @@ class BodyResult:
         self.right_elbow: geom.Point3D = geom.Point3D(body.joints[pykinect.K4ABT_JOINT_ELBOW_RIGHT].position.x,
                                                       body.joints[pykinect.K4ABT_JOINT_ELBOW_RIGHT].position.y,
                                                       body.joints[pykinect.K4ABT_JOINT_ELBOW_RIGHT].position.z)
-        self.right_pointer: geom.Line = geom.Line.from_points(self.nose, self.right_hand)
+        self.right_shoulder: geom.Point3D = geom.Point3D(body.joints[pykinect.K4ABT_JOINT_SHOULDER_RIGHT].position.x,
+                                                         body.joints[pykinect.K4ABT_JOINT_SHOULDER_RIGHT].position.y,
+                                                         body.joints[pykinect.K4ABT_JOINT_SHOULDER_RIGHT].position.z)
+        self.right_pointer: geom.Line = geom.Line.from_points(self.chest, self.right_hand)
+
+        # Calculate elbow angle for right arm
+        v_elbow_hand_r = geom.Vector3D.from_points(self.right_elbow, self.right_hand)
+        v_elbow_shoulder_r = geom.Vector3D.from_points(self.right_elbow, self.right_shoulder)
+        self.right_elbow_angle: float = v_elbow_hand_r.get_angle(v_elbow_shoulder_r) * (180 / math.pi)
 
 
 class Hand:

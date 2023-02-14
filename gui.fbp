@@ -461,7 +461,7 @@
                                 <property name="col_label_values">&quot;key&quot; &quot;value&quot;</property>
                                 <property name="col_label_vert_alignment">wxALIGN_CENTER</property>
                                 <property name="cols">2</property>
-                                <property name="column_sizes"></property>
+                                <property name="column_sizes">70,130</property>
                                 <property name="context_help"></property>
                                 <property name="context_menu">1</property>
                                 <property name="default_pane">0</property>

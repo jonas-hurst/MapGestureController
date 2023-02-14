@@ -60,6 +60,8 @@ class Guibase ( wx.Frame ):
 		self.infogrid.SetMargins( 0, 0 )
 
 		# Columns
+		self.infogrid.SetColSize( 0, 70 )
+		self.infogrid.SetColSize( 1, 130 )
 		self.infogrid.EnableDragColMove( False )
 		self.infogrid.EnableDragColSize( False )
 		self.infogrid.SetColLabelValue( 0, u"key" )

@@ -105,8 +105,8 @@ SCREEN_SINGLE_BELOW: tuple[Screen] = (Screen(3,
 
 # Single Screen setup: One screen above the camera
 SCREEN_SINGLE_ABOVE: tuple[Screen] = (Screen(3,
-                                             Point3D(-1100, -1280, 0),
-                                             Point3D( 1100,     0, 0),
+                                             Point3D(-1100, -1380, 0),
+                                             Point3D( 1100,  -100, 0),
                                              1920, 1200),)
 
 # Multi-Screen Setup: IVE Screens

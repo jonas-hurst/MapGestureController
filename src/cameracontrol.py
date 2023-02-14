@@ -130,7 +130,7 @@ class TrackerController:
 
     def startCamera(self):
         device_config = pykinect.default_configuration
-        device_config.color_resolution = pykinect.K4A_COLOR_RESOLUTION_1080P
+        device_config.color_resolution = pykinect.K4A_COLOR_RESOLUTION_1536P
         device_config.depth_mode = pykinect.K4A_DEPTH_MODE_WFOV_2X2BINNED
         device_config.camera_fps = pykinect.K4A_FRAMES_PER_SECOND_30
         device_config.color_format = pykinect.K4A_IMAGE_FORMAT_COLOR_BGRA32

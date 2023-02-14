@@ -16,8 +16,9 @@ class MainWindow(GuibaseExtended):
         self.screen_total_width = sum([screen.px_width for screen in self.screens])
 
         self.touch_control_enabled = False
+        self.show_camerafeed_enabled = False
 
-        self.__tracker_controller = TrackerController(visualize=True)
+        self.__tracker_controller = TrackerController(visualize=self.show_camerafeed_enabled)
 
         self.infodata: dict = self.initialize_infodata()
         self.set_datagrid_values(self.infodata)
@@ -37,6 +38,11 @@ class MainWindow(GuibaseExtended):
         else:
             self.stop_camera()
         GuibaseExtended.on_tgl_camera(self, event)
+
+    def on_tgl_show(self, event):
+        btn_value = self.tgl_btn_show_feed.Value
+        self.show_camerafeed_enabled = btn_value
+        self.__tracker_controller.visualize = btn_value
 
     def on_tgl_touchcontrol(self, event):
         self.touch_control_enabled = self.tgl_btn_touchcontrol.Value
@@ -97,7 +103,9 @@ class MainWindow(GuibaseExtended):
 
         while True:
             bodyresult: BodyResult = self.__tracker_controller.getBodyCaptureData()
-            self.set_bitmap(self.__tracker_controller.color_image_rgb)
+
+            if self.show_camerafeed_enabled:
+                self.set_bitmap(self.__tracker_controller.color_image_rgb)
 
             self.infodata["fps"] = self.__tracker_controller.fps
             self.infodata["bodies"] = self.__tracker_controller.number_tracked_bodies

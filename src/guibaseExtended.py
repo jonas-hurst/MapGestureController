@@ -14,11 +14,16 @@ class GuibaseExtended(Guibase):
     def __init__(self, parent):
         Guibase.__init__(self, parent)
 
+        self.Bind(wx.EVT_SIZE, self.on_resize)
+
         width, height = 854, 480
         frame = np.zeros((width, height, 3))
         self.bmp = wx.Bitmap.FromBuffer(width, height, frame)
         self.image_container.SetInactiveBitmap(self.bmp)
         self.image_container.SetBackgroundStyle(wx.BG_STYLE_PAINT)
+
+    def on_resize(self, event):
+        pass
 
     def on_tgl_camera(self, event):
         btn_value = self.tgl_btn_start_camera.Value

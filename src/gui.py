@@ -12,7 +12,6 @@ class MainWindow(GuibaseExtended):
         GuibaseExtended.__init__(self, parent)
 
         self.screens = SCREEN_SINGLE_ABOVE
-
         self.screen_total_width = sum([screen.px_width for screen in self.screens])
 
         self.touch_control_enabled = False
@@ -60,6 +59,8 @@ class MainWindow(GuibaseExtended):
             self.screens = SCREEN_SINGLE_BELOW
         elif item == 2:
             self.screens = SCREENS_IVE
+
+        self.screen_total_width = sum([screen.px_width for screen in self.screens])
 
     def on_calibrate(self, event):
         dlg = CalibrateDialogWindow(self,

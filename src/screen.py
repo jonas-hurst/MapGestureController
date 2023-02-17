@@ -88,11 +88,6 @@ class Screen:
         return int(width_px), int(height_px)
 
 
-    def draw_point(self):
-        #TODO: Draw intersection point on screen
-        pass
-
-
 # Different Screen setup templates: Single Screen and 3-Display-Multiscreen. Set your screen in self.screens
 # Screen coordinates with respect to Azure Kinect depth coordinate system
 

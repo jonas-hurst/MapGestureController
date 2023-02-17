@@ -25,9 +25,9 @@ class MainWindow(GuibaseExtended):
         self.current_operation: Operation = Operation.IDLE  # Operation performed in the current frame
         self.previous_operation: Operation = Operation.IDLE  # Operation performed in the alst frame
 
-        self.prev_lefthand_pointing = None
+        self.prev_lefthand_pointing = (-1, -1)
         self.left_hand_state_history = []
-        self.prev_righthand_pointing = None
+        self.prev_righthand_pointing = (1, -1)
         self.right_hand_state_history = []
 
     def on_tgl_camera(self, event):
@@ -144,8 +144,6 @@ class MainWindow(GuibaseExtended):
                 message["right"]["present"] = False
                 message["left"]["present"] = False
                 tc.finger_up()
-                self.prev_righthand_pointing = None
-                self.prev_lefthand_pointing = None
 
             self.infodata["operation"] = self.current_operation.name
 
@@ -168,8 +166,11 @@ class MainWindow(GuibaseExtended):
         right_hand_pointing_to_screen = False
         if screen_x_r == -1 and screen_y_r == -1:
             message["right"]["present"] = False
-            self.prev_righthand_pointing = None
         else:
+            if abs(screen_x_r - self.prev_righthand_pointing[0]) < 6:
+                screen_x_r = self.prev_righthand_pointing[0]
+            if abs(screen_y_r - self.prev_righthand_pointing[1]) < 6:
+                screen_y_r = self.prev_righthand_pointing[1]
             message["right"]["present"] = True
             message["right"]["position"]["x"] = screen_x_r
             message["right"]["position"]["y"] = screen_y_r
@@ -180,8 +181,11 @@ class MainWindow(GuibaseExtended):
         left_hand_pointing_to_screen = False
         if screen_x_l == -1 and screen_y_l == -1:
             message["left"]["present"] = False
-            self.prev_lefthand_pointing = None
         else:
+            if abs(screen_x_l - self.prev_lefthand_pointing[0]) < 6:
+                screen_x_l = self.prev_lefthand_pointing[0]
+            if abs(screen_y_l - self.prev_lefthand_pointing[1]) < 6:
+                screen_y_l = self.prev_lefthand_pointing[1]
             message["left"]["present"] = True
             message["left"]["position"]["x"] = screen_x_l
             message["left"]["position"]["y"] = screen_y_l
@@ -205,6 +209,9 @@ class MainWindow(GuibaseExtended):
         if self.touch_control_enabled:
             self.process_transition(operation_transition, screen_x_l, screen_y_l, screen_x_r, screen_y_r)
             self.process_operation(screen_x_l, screen_y_l, screen_x_r, screen_y_r)
+
+        self.prev_righthand_pointing = (screen_x_r, screen_y_r)
+        self.prev_lefthand_pointing = (screen_x_l, screen_y_l)
 
     def get_screen_intersection(self, pointer: geom.Line) -> tuple[int, int]:
         # Calculate the point in 3D-space wehre pointer-line and infinite screen-plain intersect
@@ -434,29 +441,21 @@ class MainWindow(GuibaseExtended):
 
     def transition_to_panleft(self, x_left: int, y_left: int):
         tc.finger_down((self.screen_total_width - x_left, y_left))
-        self.prev_lefthand_pointing = (x_left, y_left)
 
     def transition_from_panleft(self):
         tc.finger_up()
-        self.prev_lefthand_pointing = None
 
     def transition_to_panrigth(self, x_right: int, y_right: int):
         tc.finger_down((self.screen_total_width - x_right, y_right))
-        self.prev_righthand_pointing = (x_right, y_right)
 
     def transition_from_panright(self):
         tc.finger_up()
-        self.prev_righthand_pointing = None
 
     def transition_from_zoom(self):
         tc.two_fingers_up()
-        self.prev_righthand_pointing = None
-        self.prev_lefthand_pointing = None
 
     def transition_to_zoom(self, x_left, y_left, x_right, y_right):
         tc.two_fingers_down((self.screen_total_width - x_left, y_left), (self.screen_total_width - x_right, y_right))
-        self.prev_righthand_pointing = (x_right, y_right)
-        self.prev_lefthand_pointing = (x_left, y_left)
 
     def process_operation(self, x_left: int, y_left: int, x_right: int, y_right: int):
         if self.current_operation == Operation.PAN_RIGHTHAND:
@@ -469,14 +468,10 @@ class MainWindow(GuibaseExtended):
             self.zoom(x_left, y_left, x_right, y_right)
 
     def pan_righthand(self, x: int, y: int):
-        if self.prev_righthand_pointing is None:
-            self.prev_righthand_pointing = (self.screen_total_width - x, y)
         tc.move_finger((self.prev_righthand_pointing[0]-x, y - self.prev_righthand_pointing[1]))
         self.prev_righthand_pointing = (x, y)
 
     def pan_lefthand(self, x: int, y: int):
-        if self.prev_lefthand_pointing is None:
-            self.prev_lefthand_pointing = (self.screen_total_width - x, y)
         tc.move_finger((self.prev_lefthand_pointing[0]-x, y-self.prev_lefthand_pointing[1]))
         self.prev_lefthand_pointing = (x, y)
 

@@ -231,9 +231,6 @@ class MainWindow(GuibaseExtended):
             except ValueError:
                 continue
 
-        # TODO: Properly calculate screen coordinates
-        # Currently, this is hard-coded to specific setups
-
         # No intersection with any screen
         if screen_id == -1:
             return -1, -1

@@ -494,6 +494,6 @@ class CalibrateDialogWindow(CalibrateDialogExtended):
         self.Close()
 
     def on_slider_changed(self, event):
-        beta_value = self.slider_beta.GetValue() / 100
+        beta_value = self.slider_beta.GetValue() / 1000
         mincutoff_value = self.slider_mincutoff.GetValue() / 100000
         self.tuneunction(min_cutoff=mincutoff_value, beta=beta_value)

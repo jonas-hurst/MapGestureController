@@ -167,6 +167,7 @@ class MainWindow(GuibaseExtended):
         if screen_x_r == -1 and screen_y_r == -1:
             message["right"]["present"] = False
         else:
+            # prevent point jitter: if px-offset is <6 px compared to prev. frame, then use old values
             if abs(screen_x_r - self.prev_righthand_pointing[0]) < 6:
                 screen_x_r = self.prev_righthand_pointing[0]
             if abs(screen_y_r - self.prev_righthand_pointing[1]) < 6:
@@ -182,6 +183,7 @@ class MainWindow(GuibaseExtended):
         if screen_x_l == -1 and screen_y_l == -1:
             message["left"]["present"] = False
         else:
+            # prevent point jitter: if px-offset is <6 px compared to prev. frame, then use old values
             if abs(screen_x_l - self.prev_lefthand_pointing[0]) < 6:
                 screen_x_l = self.prev_lefthand_pointing[0]
             if abs(screen_y_l - self.prev_lefthand_pointing[1]) < 6:

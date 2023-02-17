@@ -50,6 +50,11 @@ class Guibase ( wx.Frame ):
 
 		bSizer1.Add( self.calibrate_button, 0, wx.ALL|wx.EXPAND, 5 )
 
+		screen_choiceChoices = [ u"single screen above", u"single screen below", u"IVE" ]
+		self.screen_choice = wx.Choice( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, screen_choiceChoices, 0 )
+		self.screen_choice.SetSelection( 0 )
+		bSizer1.Add( self.screen_choice, 0, wx.ALL|wx.EXPAND, 5 )
+
 		self.infogrid = wx.grid.Grid( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, 0 )
 
 		# Grid
@@ -96,6 +101,7 @@ class Guibase ( wx.Frame ):
 		self.tgl_btn_show_feed.Bind( wx.EVT_TOGGLEBUTTON, self.on_tgl_show )
 		self.tgl_btn_touchcontrol.Bind( wx.EVT_TOGGLEBUTTON, self.on_tgl_touchcontrol )
 		self.calibrate_button.Bind( wx.EVT_BUTTON, self.on_calibrate )
+		self.screen_choice.Bind( wx.EVT_CHOICE, self.on_screen_changed )
 
 	def __del__( self ):
 		pass
@@ -115,6 +121,9 @@ class Guibase ( wx.Frame ):
 		event.Skip()
 
 	def on_calibrate( self, event ):
+		event.Skip()
+
+	def on_screen_changed( self, event ):
 		event.Skip()
 
 

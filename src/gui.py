@@ -52,6 +52,15 @@ class MainWindow(GuibaseExtended):
             self.stop_camera()
         GuibaseExtended.on_close(self, event)
 
+    def on_screen_changed(self, event):
+        item = self.screen_choice.GetSelection()
+        if item == 0:
+            self.screens = SCREEN_SINGLE_ABOVE
+        elif item == 1:
+            self.screens = SCREEN_SINGLE_BELOW
+        elif item == 2:
+            self.screens = SCREENS_IVE
+
     def on_calibrate(self, event):
         dlg = CalibrateDialogWindow(self,
                                     self.__tracker_controller.tune_filters,

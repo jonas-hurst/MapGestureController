@@ -16,9 +16,10 @@ class GuibaseExtended(Guibase):
 
         self.Bind(wx.EVT_SIZE, self.on_resize)
 
-        width, height = 854, 480
-        frame = np.zeros((width, height, 3))
-        self.bmp = wx.Bitmap.FromBuffer(width, height, frame)
+        self.image_width, self.image_height = 900, 675
+
+        frame = np.zeros((self.image_width, self.image_height, 3))
+        self.bmp = wx.Bitmap.FromBuffer(self.image_width, self.image_height, frame)
         self.image_container.SetInactiveBitmap(self.bmp)
         self.image_container.SetBackgroundStyle(wx.BG_STYLE_PAINT)
 
@@ -59,7 +60,7 @@ class GuibaseExtended(Guibase):
         :param frame: 2D numpy array containing the image
         :return: None
         """
-        frame_small_rgb = resize(frame.copy(), (854, 480))
+        frame_small_rgb = resize(frame.copy(), (self.image_width, self.image_height))
         self.bmp.CopyFromBuffer(frame_small_rgb)
         self.image_container.SetInactiveBitmap(self.bmp)
 

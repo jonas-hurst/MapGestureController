@@ -121,7 +121,7 @@
                         <property name="pos"></property>
                         <property name="resize">Resizable</property>
                         <property name="show">1</property>
-                        <property name="size">900,500</property>
+                        <property name="size">900,675</property>
                         <property name="style">wxAC_DEFAULT_STYLE</property>
                         <property name="subclass">; ; forward_declare</property>
                         <property name="toolbar_pane">0</property>

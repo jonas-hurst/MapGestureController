@@ -124,7 +124,12 @@ class TrackerController:
     def initialize_tracking(self):
         self.__device = self.startCamera()
         self.__tracker = self.startTracker()
-        self.__hands = mp.solutions.hands.Hands(static_image_mode=False, max_num_hands=2, model_complexity=0)
+        self.__hands = mp.solutions.hands.Hands(
+            static_image_mode=False,
+            max_num_hands=2,
+            model_complexity=0,
+            min_detection_confidence=0.2,
+            min_tracking_confidence=0.3)
         self.__keypoint_classifier = KeyPointClassifier()
         self.camera_running = True
 

@@ -32,7 +32,6 @@ class Operation(Enum):
     PAN_LEFTHAND = 2
     PAN_RIGHTHAND = 3
     ZOOM = 4
-    POINTING = 5
     IDLE = 99
 
 

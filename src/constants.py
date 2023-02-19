@@ -27,11 +27,12 @@ class Handednes(Enum):
 
 
 class Operation(Enum):
-    SELECT = 0
-    PAN_LEFTHAND = 1
-    PAN_RIGHTHAND = 2
-    ZOOM = 3
-    POINTING = 4
+    SELECT_LEFTHAND = 0
+    SELECT_RIGHTHAND = 1
+    PAN_LEFTHAND = 2
+    PAN_RIGHTHAND = 3
+    ZOOM = 4
+    POINTING = 5
     IDLE = 99
 
 

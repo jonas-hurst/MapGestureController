@@ -256,6 +256,20 @@ class MainWindow(GuibaseExtended):
     def detect_operation_handstate(self, bodyresult: BodyResult, left_pointing: bool, right_pointing: bool) -> Operation:
         if left_pointing and right_pointing and bodyresult.right_hand_state == HandState.CLOSED and bodyresult.left_hand_state == HandState.CLOSED:
             return Operation.ZOOM
+        if (
+            right_pointing and
+            bodyresult.right_hand_state == HandState.POINTER and
+            bodyresult.left_hand_state != HandState.POINTER and
+            bodyresult.left_hand_state != HandState.CLOSED
+        ):
+            return Operation.SELECT_RIGHTHAND
+        if(
+            left_pointing and
+            bodyresult.left_hand_state == HandState.POINTER and
+            bodyresult.right_hand_state != HandState.POINTER and
+            bodyresult.right_hand_state != HandState.CLOSED
+        ):
+            return Operation.SELECT_LEFTHAND
         if bodyresult.right_hand_state == HandState.CLOSED and right_pointing:
             return Operation.PAN_RIGHTHAND
         if bodyresult.left_hand_state == HandState.CLOSED and left_pointing:
@@ -305,19 +319,35 @@ class MainWindow(GuibaseExtended):
         if self.previous_operation == self.current_operation:
             return OperationTransition.REMAINS
 
-        if self.previous_operation == Operation.SELECT:
+        if self.previous_operation == Operation.SELECT_LEFTHAND:
+            if self.current_operation == Operation.SELECT_RIGHTHAND:
+                return OperationTransition.SELECTLEFT_TO_SELECTRIGHT
             if self.current_operation == Operation.PAN_LEFTHAND:
-                return OperationTransition.SELECT_TO_PANLEFT
+                return OperationTransition.SELECTLEFT_TO_PANLEFT
             if self.current_operation == Operation.PAN_RIGHTHAND:
-                return OperationTransition.SELECT_TO_PANRIGHT
+                return OperationTransition.SELECTLEFT_TO_PANRIGHT
             if self.current_operation == Operation.ZOOM:
-                return OperationTransition.SELECT_TO_ZOOM
+                return OperationTransition.SELECTLEFT_TO_ZOOM
             if self.current_operation == Operation.IDLE:
-                return OperationTransition.SELECT_TO_IDLE
+                return OperationTransition.SELECTLEFT_TO_IDLE
+
+        if self.previous_operation == Operation.SELECT_RIGHTHAND:
+            if self.current_operation == Operation.SELECT_LEFTHAND:
+                return OperationTransition.SELECTRIGHT_TO_SELECTLEFT
+            if self.current_operation == Operation.PAN_LEFTHAND:
+                return OperationTransition.SELECTRIGHT_TO_PANLEFT
+            if self.current_operation == Operation.PAN_RIGHTHAND:
+                return OperationTransition.SELECTRIGHT_TO_PANRIGHT
+            if self.current_operation == Operation.ZOOM:
+                return OperationTransition.SELECTRIGHT_TO_ZOOM
+            if self.current_operation == Operation.IDLE:
+                return OperationTransition.SELECTRIGHT_TO_IDLE
 
         if self.previous_operation == Operation.PAN_LEFTHAND:
-            if self.current_operation == Operation.SELECT:
-                return OperationTransition.PANLEFT_TO_SELECT
+            if self.current_operation == Operation.SELECT_LEFTHAND:
+                return OperationTransition.PANLEFT_TO_SELECTLEFT
+            if self.current_operation == Operation.SELECT_RIGHTHAND:
+                return OperationTransition.PANLEFT_TO_SELECTRIGHT
             if self.current_operation == Operation.PAN_RIGHTHAND:
                 return OperationTransition.PANLEFT_TO_PANRIGHT
             if self.current_operation == Operation.ZOOM:
@@ -326,8 +356,10 @@ class MainWindow(GuibaseExtended):
                 return OperationTransition.PANLEFT_TO_IDLE
 
         if self.previous_operation == Operation.PAN_RIGHTHAND:
-            if self.current_operation == Operation.SELECT:
-                return OperationTransition.PANRIGHT_TO_SELECT
+            if self.current_operation == Operation.SELECT_LEFTHAND:
+                return OperationTransition.PANRIGHT_TO_SELECTLEFT
+            if self.current_operation == Operation.SELECT_RIGHTHAND:
+                return OperationTransition.PANRIGHT_TO_SELECTRIGHT
             if self.current_operation == Operation.PAN_LEFTHAND:
                 return OperationTransition.PANRIGHT_TO_PANLEFT
             if self.current_operation == Operation.ZOOM:
@@ -336,8 +368,10 @@ class MainWindow(GuibaseExtended):
                 return OperationTransition.PANRIGHT_TO_IDLE
 
         if self.previous_operation == Operation.ZOOM:
-            if self.current_operation == Operation.SELECT:
-                return OperationTransition.ZOOM_TO_SELECT
+            if self.current_operation == Operation.SELECT_LEFTHAND:
+                return OperationTransition.ZOOM_TO_SELECTLEFT
+            if self.current_operation == Operation.SELECT_RIGHTHAND:
+                return OperationTransition.ZOOM_TO_SELECTRIGHT
             if self.current_operation == Operation.PAN_LEFTHAND:
                 return OperationTransition.ZOOM_TO_PANLEFT
             if self.current_operation == Operation.PAN_RIGHTHAND:
@@ -346,8 +380,10 @@ class MainWindow(GuibaseExtended):
                 return OperationTransition.ZOOM_TO_IDLE
 
         if self.previous_operation == Operation.IDLE:
-            if self.current_operation == Operation.SELECT:
-                return OperationTransition.IDLE_TO_SELECT
+            if self.current_operation == Operation.SELECT_LEFTHAND:
+                return OperationTransition.IDLE_TO_SELECTLEFT
+            if self.previous_operation == Operation.SELECT_RIGHTHAND:
+                return OperationTransition.IDLE_TO_SELECTRIGHT
             if self.current_operation == Operation.PAN_LEFTHAND:
                 return OperationTransition.IDLE_TO_PANLEFT
             if self.current_operation == Operation.PAN_RIGHTHAND:
@@ -358,34 +394,62 @@ class MainWindow(GuibaseExtended):
     def process_transition(self, transition: OperationTransition, x_left: int, y_left: int, x_right: int, y_right: int):
         if transition == OperationTransition.REMAINS:
             return
-        if transition == OperationTransition.SELECT_TO_PANLEFT:
+        if transition == OperationTransition.SELECTLEFT_TO_SELECTRIGHT:
+            self.transition_from_selectleft()
+            self.transition_to_selectright()
             return
-        if transition == OperationTransition.SELECT_TO_PANRIGHT:
+        if transition == OperationTransition.SELECTLEFT_TO_PANLEFT:
             return
-        if transition == OperationTransition.SELECT_TO_ZOOM:
+        if transition == OperationTransition.SELECTLEFT_TO_PANRIGHT:
             return
-        if transition == OperationTransition.SELECT_TO_POINTING:
+        if transition == OperationTransition.SELECTLEFT_TO_ZOOM:
             return
-        if transition == OperationTransition.SELECT_TO_IDLE:
+        if transition == OperationTransition.SELECTLEFT_TO_IDLE:
             return
-        if transition == OperationTransition.PANLEFT_TO_SELECT:
+        if transition == OperationTransition.SELECTRIGHT_TO_SELECTLEFT:
+            self.transition_from_selectright()
+            return
+        if transition == OperationTransition.SELECTRIGHT_TO_PANLEFT:
+            self.transition_from_selectright()
+            self.transition_to_panleft(x_left, y_left)
+            return
+        if transition == OperationTransition.SELECTRIGHT_TO_PANRIGHT:
+            self.transition_from_selectright()
+            self.transition_to_panrigth(x_right, y_right)
+            return
+        if transition == OperationTransition.SELECTRIGHT_TO_ZOOM:
+            self.transition_from_selectright()
+            self.transition_to_zoom(x_left, y_left, x_right, y_right)
+            return
+        if transition == OperationTransition.SELECTRIGHT_TO_IDLE:
+            self.transition_from_selectright()
+            return
+        if transition == OperationTransition.PANLEFT_TO_SELECTLEFT:
             self.transition_from_panleft()
+            self.transition_to_selectleft()
+            return
+        if transition == OperationTransition.PANLEFT_TO_SELECTRIGHT:
+            self.transition_from_panleft()
+            self.transition_to_selectright()
             return
         if transition == OperationTransition.PANLEFT_TO_PANRIGHT:
             self.transition_from_panleft()
+            self.transition_to_panrigth(x_right, y_right)
             return
         if transition == OperationTransition.PANLEFT_TO_ZOOM:
             self.transition_from_panleft()
             self.transition_to_zoom(x_left, y_left, x_right, y_right)
             return
-        if transition == OperationTransition.PANLEFT_TO_POINTING:
-            self.transition_from_panleft()
-            return
         if transition == OperationTransition.PANLEFT_TO_IDLE:
             self.transition_from_panleft()
             return
-        if transition == OperationTransition.PANRIGHT_TO_SELECT:
+        if transition == OperationTransition.PANRIGHT_TO_SELECTLEFT:
             self.transition_from_panright()
+            self.transition_to_selectleft()
+            return
+        if transition == OperationTransition.PANRIGHT_TO_SELECTRIGHT:
+            self.transition_from_panright()
+            self.transition_to_selectright()
             return
         if transition == OperationTransition.PANRIGHT_TO_PANLEFT:
             self.transition_from_panright()
@@ -394,13 +458,16 @@ class MainWindow(GuibaseExtended):
             self.transition_from_panright()
             self.transition_to_zoom(x_left, y_left, x_right, y_right)
             return
-        if transition == OperationTransition.PANRIGHT_TO_POINTING:
-            self.transition_from_panright()
-            return
         if transition == OperationTransition.PANRIGHT_TO_IDLE:
             self.transition_from_panright()
             return
-        if transition == OperationTransition.ZOOM_TO_SELECT:
+        if transition == OperationTransition.ZOOM_TO_SELECTLEFT:
+            self.transition_from_zoom()
+            self.transition_to_selectleft()
+            return
+        if transition == OperationTransition.ZOOM_TO_SELECTRIGHT:
+            self.transition_from_zoom()
+            self.transition_to_selectright()
             return
         if transition == OperationTransition.ZOOM_TO_PANLEFT:
             self.transition_from_zoom()
@@ -410,21 +477,14 @@ class MainWindow(GuibaseExtended):
             self.transition_from_zoom()
             self.transition_to_panrigth(x_right, y_right)
             return
-        if transition == OperationTransition.ZOOM_TO_POINTING:
-            self.transition_from_zoom()
-            return
         if transition == OperationTransition.ZOOM_TO_IDLE:
             self.transition_from_zoom()
             return
-        if transition == OperationTransition.POINTING_TO_SELECT:
+        if transition == OperationTransition.IDLE_TO_SELECTLEFT:
+            self.transition_to_selectleft()
             return
-        if transition == OperationTransition.POINTING_TO_PANLEFT:
-            return
-        if transition == OperationTransition.POINTING_TO_PANRIGHT:
-            return
-        if transition == OperationTransition.POINTING_TO_ZOOM:
-            return
-        if transition == OperationTransition.IDLE_TO_SELECT:
+        if transition == OperationTransition.IDLE_TO_SELECTRIGHT:
+            self.transition_to_selectright()
             return
         if transition == OperationTransition.IDLE_TO_PANLEFT:
             self.transition_to_panleft(x_left, y_left)
@@ -435,8 +495,18 @@ class MainWindow(GuibaseExtended):
         if transition == OperationTransition.IDLE_TO_ZOOM:
             self.transition_to_zoom(x_left, y_left, x_right, y_right)
             return
-        if transition == OperationTransition.IDLE_TO_POINTING:
-            return
+
+    def transition_to_selectleft(self):
+        pass
+
+    def transition_from_selectleft(self):
+        pass
+
+    def transition_to_selectright(self):
+        pass
+
+    def transition_from_selectright(self):
+        pass
 
     def transition_to_panleft(self, x_left: int, y_left: int):
         tc.finger_down((self.screen_total_width - x_left, y_left))
@@ -457,6 +527,12 @@ class MainWindow(GuibaseExtended):
         tc.two_fingers_down((self.screen_total_width - x_left, y_left), (self.screen_total_width - x_right, y_right))
 
     def process_operation(self, x_left: int, y_left: int, x_right: int, y_right: int):
+        if self.current_operation == Operation.SELECT_LEFTHAND:
+            self.select_lefthand(x_left, y_left)
+
+        if self.current_operation == Operation.SELECT_RIGHTHAND:
+            self.select_righthand(x_right, y_right)
+
         if self.current_operation == Operation.PAN_RIGHTHAND:
             self.pan_righthand(x_right, y_right)
 
@@ -465,6 +541,12 @@ class MainWindow(GuibaseExtended):
 
         if self.current_operation == Operation.ZOOM:
             self.zoom(x_left, y_left, x_right, y_right)
+
+    def select_lefthand(self, x: int, y: int):
+        pass
+
+    def select_righthand(self, x: int, y: int):
+        pass
 
     def pan_righthand(self, x: int, y: int):
         tc.move_finger((self.prev_righthand_pointing[0]-x, y - self.prev_righthand_pointing[1]))

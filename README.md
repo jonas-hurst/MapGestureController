@@ -1,6 +1,6 @@
 # MapGestureController
 
-Master's Thesis Project of Jonas Hurst: Tool to control a large screen map environment remotely.
+Master's Thesis Project of Jonas Hurst: Tool to control a large screen map environment remotely, using an **Azure Kinect** camera.
 
 Supports: Panning, Zooming and Selecting for maps on the web
 

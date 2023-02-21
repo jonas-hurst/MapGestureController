@@ -24,6 +24,8 @@ class InteractionController:
         self.current_operation: Operation = Operation.IDLE  # Operation performed in the current frame
         self.previous_operation: Operation = Operation.IDLE  # Operation performed in the alst frame
 
+        self.last_tap: float = 0  # indicates time when last tap happened
+
         self.prev_lefthand_pointing = (-1, -1)
         self.left_hand_coords_history: list[Point3D] = []
         self.prev_righthand_pointing = (1, -1)
@@ -518,7 +520,14 @@ class InteractionController:
         pass
 
     def select_righthand(self, x: int, y: int):
-        tc.tap((self.screen_total_width - x, y))
+        t_current = time()
+        if t_current - self.last_tap < 1.5:
+            return
+
+        x_prev, y_prev = self.prev_righthand_pointing
+        tc.tap((self.screen_total_width - x_prev, y_prev))
+
+        self.last_tap = time()
 
     def pan_righthand(self, x: int, y: int):
         tc.move_finger((self.prev_righthand_pointing[0]-x, y - self.prev_righthand_pointing[1]))

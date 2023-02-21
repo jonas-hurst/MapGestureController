@@ -21,8 +21,6 @@ class InteractionController:
 
         self.__tracker_controller = TrackerController(visualize=self.show_camerafeed_enabled)
 
-
-
         self.current_operation: Operation = Operation.IDLE  # Operation performed in the current frame
         self.previous_operation: Operation = Operation.IDLE  # Operation performed in the alst frame
 

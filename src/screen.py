@@ -6,8 +6,8 @@ class Screen:
     def __init__(self, screen_id: int, lower_left_corner: Point3D, upper_right_corner: Point3D, px_width: int, px_height: int):
         """
         Initializes a new Screen object (e.g. TV screen or projection screen)
-        :param lower_left_corner: Lower left corner of the screen
-        :param upper_right_corner: Upper right corner of the screen
+        :param lower_left_corner: Lower left corner of the screen (in Azure Kinect Depth camera coordinates)
+        :param upper_right_corner: Upper right corner of the screen (in Azure Kinect Depth camera coordinates)
         :param px_width: Width of screen in pixels
         :param px_height: Height of screen in pixels
         """

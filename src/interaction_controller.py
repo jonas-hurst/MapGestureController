@@ -138,7 +138,7 @@ class InteractionController:
         self.infodata["beta"] = self.__tracker_controller.beta
 
         # Check if Right hand is pointing towards the screen
-        screen_x_r, screen_y_r = self.get_screen_intersection(bodyresult.right_pointer)
+        screen_x_r, screen_y_r, intersect_point_r = self.get_screen_intersection(bodyresult.right_pointer)
         right_hand_pointing_to_screen = False
         if screen_x_r == -1 and screen_y_r == -1:
             message["right"]["present"] = False
@@ -154,7 +154,7 @@ class InteractionController:
             right_hand_pointing_to_screen = True
 
         # Check if Left hand is pointing towards the screen
-        screen_x_l, screen_y_l = self.get_screen_intersection(bodyresult.left_pointer)
+        screen_x_l, screen_y_l, intersect_point_l = self.get_screen_intersection(bodyresult.left_pointer)
         left_hand_pointing_to_screen = False
         if screen_x_l == -1 and screen_y_l == -1:
             message["left"]["present"] = False
@@ -178,7 +178,12 @@ class InteractionController:
 
         # After here only if if hand points to screen is on screen
         self.previous_operation = self.current_operation
-        self.current_operation = self.detect_operation_handstate(bodyresult, left_hand_pointing_to_screen, right_hand_pointing_to_screen)
+        self.current_operation = self.detect_operation_handstate(
+            bodyresult,
+            left_hand_pointing_to_screen,
+            right_hand_pointing_to_screen,
+            intersect_point_l,
+            intersect_point_r)
         # self.current_operation = self.detect_operation_distance(bodyresult, left_hand_pointing_to_screen, right_hand_pointing_to_screen)
         # self.current_operation = self.detect_operation_angle(bodyresult, left_hand_pointing_to_screen, right_hand_pointing_to_screen)
 
@@ -191,50 +196,50 @@ class InteractionController:
         self.prev_righthand_pointing = (screen_x_r, screen_y_r)
         self.prev_lefthand_pointing = (screen_x_l, screen_y_l)
 
-    def get_screen_intersection(self, pointer: geom.Line) -> tuple[int, int]:
+    def get_screen_intersection(self, pointer: geom.Line) -> tuple[int, int, Point3D]:
         # Calculate the point in 3D-space wehre pointer-line and infinite screen-plain intersect
         # A check whether this point is on screen occurs later
         screen_id = -1
+        screen_x, screen_y = -1, -1
+        intersect_point = Point3D(-1, -1, -1)
         for screen in self.screens:
             try:
-                pnt = screen.screen_plain.intersect_line(pointer)
+                intersect_point = screen.screen_plain.intersect_line(pointer)
             except geom.ParallelError:
                 continue
 
             # If line-plain intersection point is on screen, try-block is executed
             # If it is not, except block executes.
             try:
-                screen_x, screen_y = screen.coords_to_px(pnt)
+                screen_x, screen_y = screen.coords_to_px(intersect_point)
                 screen_id = screen.screen_id
             except ValueError:
                 continue
 
         # No intersection with any screen
         if screen_id == -1:
-            return -1, -1
+            return -1, -1, intersect_point
 
         if screen_id == 0:
-            return 2 * 1920 + screen_x, screen_y
+            return 2 * 1920 + screen_x, screen_y, intersect_point
 
         if screen_id == 1:
-            return 1920 + screen_x, screen_y
+            return 1920 + screen_x, screen_y, intersect_point
 
         if screen_id == 2:
-            return 1920 - screen_x, screen_y
+            return 1920 - screen_x, screen_y, intersect_point
 
         if screen_id == 3:
-            return screen_x, screen_y
+            return screen_x, screen_y, intersect_point
 
-        print(screen_id)
-        # return screen_x, screen_y
-        return -1, -1
+        return -1, -1, intersect_point
 
-    def detect_operation_handstate(self, bodyresult: BodyResult, left_pointing: bool, right_pointing: bool) -> Operation:
+    def detect_operation_handstate(self, bodyresult: BodyResult, left_pointing: bool, right_pointing: bool, intersect_point_l: Point3D, intersect_point_r: Point3D) -> Operation:
         if left_pointing and right_pointing and bodyresult.right_hand_state == HandState.CLOSED and bodyresult.left_hand_state == HandState.CLOSED:
             return Operation.ZOOM
 
         if self.interaction_mechanism == InteractionMechanism.SELECT_RIGHT_PAN_LEFT or self.interaction_mechanism == InteractionMechanism.SELECT_BOTH_PAN_BOTH:
-            if right_pointing and self.detect_righthand_selection(bodyresult):
+            if right_pointing and self.detect_righthand_selection(bodyresult, intersect_point_r):
                 return Operation.SELECT_RIGHTHAND
             if bodyresult.left_hand_state == HandState.CLOSED and left_pointing:
                 return Operation.PAN_LEFTHAND
@@ -247,13 +252,13 @@ class InteractionController:
 
         return Operation.IDLE
 
-    def detect_righthand_selection(self, bodyresult: BodyResult) -> bool:
+    def detect_righthand_selection(self, bodyresult: BodyResult, intersection_point_r: Point3D) -> bool:
         # Check if each hand point is closer to camera than the one before
         if bodyresult.right_hand_state == HandState.CLOSED or bodyresult.left_hand_state == HandState.CLOSED:
             return False
 
         for idx in range(len(self.right_hand_coords_history) - 1):
-            if self.right_hand_coords_history[idx].z <= self.right_hand_coords_history[idx+1].z:
+            if self.right_hand_coords_history[idx].distance(intersection_point_r) <= self.right_hand_coords_history[idx+1].distance(intersection_point_r):
                 return False
 
         # Last hand position must be closer to camera than the onx x frames ago.

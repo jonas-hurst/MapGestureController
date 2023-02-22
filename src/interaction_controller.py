@@ -16,6 +16,8 @@ class InteractionController:
         self.screens = SCREEN_SINGLE_ABOVE
         self.screen_total_width = sum([screen.px_width for screen in self.screens])
 
+        self.interaction_mechanism: InteractionMechanism = InteractionMechanism.SELECT_RIGHT_PAN_LEFT
+
         self.touch_control_enabled = False
         self.show_camerafeed_enabled = False
 
@@ -94,7 +96,7 @@ class InteractionController:
             if len(self.left_hand_coords_history) > 2:
                 self.left_hand_coords_history.pop(0)
             try:
-                self.left_hand_coords_history.append(bodyresult.left_hand)
+                self.left_hand_coords_history.append(bodyresult.left_hand_tip)
             except AttributeError:
                 self.left_hand_coords_history.append(Point3D(0, 0, 0))
 
@@ -102,7 +104,7 @@ class InteractionController:
             if len(self.right_hand_coords_history) > 2:
                 self.right_hand_coords_history.pop(0)
             try:
-                self.right_hand_coords_history.append(bodyresult.right_hand)
+                self.right_hand_coords_history.append(bodyresult.right_hand_tip)
             except AttributeError:
                 self.right_hand_coords_history.append(Point3D(0, 0, 0))
 
@@ -224,12 +226,19 @@ class InteractionController:
     def detect_operation_handstate(self, bodyresult: BodyResult, left_pointing: bool, right_pointing: bool) -> Operation:
         if left_pointing and right_pointing and bodyresult.right_hand_state == HandState.CLOSED and bodyresult.left_hand_state == HandState.CLOSED:
             return Operation.ZOOM
-        if right_pointing and self.detect_righthand_selection(bodyresult):
-            return Operation.SELECT_RIGHTHAND
-        if bodyresult.right_hand_state == HandState.CLOSED and right_pointing:
-            return Operation.PAN_RIGHTHAND
-        if bodyresult.left_hand_state == HandState.CLOSED and left_pointing:
-            return Operation.PAN_LEFTHAND
+
+        if self.interaction_mechanism == InteractionMechanism.SELECT_RIGHT_PAN_LEFT or self.interaction_mechanism == InteractionMechanism.SELECT_BOTH_PAN_BOTH:
+            if right_pointing and self.detect_righthand_selection(bodyresult):
+                return Operation.SELECT_RIGHTHAND
+            if bodyresult.left_hand_state == HandState.CLOSED and left_pointing:
+                return Operation.PAN_LEFTHAND
+
+        if self.interaction_mechanism == InteractionMechanism.SELECT_LEFT_PAN_RIGHT or self.interaction_mechanism == InteractionMechanism.SELECT_BOTH_PAN_BOTH:
+            if left_pointing and self.detect_lefthand_selection(bodyresult):
+                return Operation.SELECT_LEFTHAND
+            if bodyresult.right_hand_state == HandState.CLOSED and right_pointing:
+                return Operation.PAN_RIGHTHAND
+
         return Operation.IDLE
 
     def detect_righthand_selection(self, bodyresult: BodyResult) -> bool:
@@ -248,6 +257,21 @@ class InteractionController:
 
         self.right_hand_coords_history.pop()
         self.right_hand_coords_history.append(Point3D(0, 0, 0))
+        return True
+
+    def detect_lefthand_selection(self, bodyresult: BodyResult) -> bool:
+        if bodyresult.left_hand_state == HandState.CLOSED or bodyresult.right_hand_state == HandState.CLOSED:
+            return False
+
+        for idx in range(len(self.left_hand_coords_history) - 1):
+            if self.left_hand_coords_history[idx].z <= self.left_hand_coords_history[idx+1].z:
+                return False
+
+        if self.left_hand_coords_history[-1].distance(self.left_hand_coords_history[0]) < 40:
+            return False
+
+        self.left_hand_coords_history.pop()
+        self.left_hand_coords_history.append(Point3D(0, 0, 0))
         return True
 
     def detect_operation_distance(self, bodyresult: BodyResult, left_pointing: bool, right_pointing: bool) -> Operation:
@@ -517,7 +541,14 @@ class InteractionController:
             self.zoom(x_left, y_left, x_right, y_right)
 
     def select_lefthand(self, x: int, y: int):
-        pass
+        t_current = time()
+        if t_current - self.last_tap < 1.5:
+            return
+
+        x_prev, y_prev = self.prev_lefthand_pointing
+        tc.tap((self.screen_total_width - x_prev, y_prev))
+
+        self.last_tap = time()
 
     def select_righthand(self, x: int, y: int):
         t_current = time()

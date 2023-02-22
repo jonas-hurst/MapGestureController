@@ -3,6 +3,12 @@ from enum import Enum
 from numbers import Real
 
 
+class InteractionMechanism(Enum):
+    SELECT_RIGHT_PAN_LEFT = 0
+    SELECT_LEFT_PAN_RIGHT = 1
+    SELECT_BOTH_PAN_BOTH = 2
+
+
 class HandState(Enum):
     OPEN = 0
     CLOSED = 1

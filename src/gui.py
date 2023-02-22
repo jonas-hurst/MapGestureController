@@ -32,6 +32,15 @@ class MainWindow(GuibaseExtended):
         self.interaction_controller.stop_camera()
         GuibaseExtended.on_close(self, event)
 
+    def on_interaction_mechanism_chagned(self, event):
+        item = self.interaction_mechanism_choice.GetSelection()
+        if item == 0:
+            self.interaction_controller.interaction_mechanism = InteractionMechanism.SELECT_RIGHT_PAN_LEFT
+        elif item == 1:
+            self.interaction_controller.interaction_mechanism = InteractionMechanism.SELECT_LEFT_PAN_RIGHT
+        elif item == 2:
+            self.interaction_controller.interaction_mechanism = InteractionMechanism.SELECT_BOTH_PAN_BOTH
+
     def on_screen_changed(self, event):
         item = self.screen_choice.GetSelection()
         if item == 0:

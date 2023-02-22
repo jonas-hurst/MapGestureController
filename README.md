@@ -17,6 +17,8 @@ This is achieved interfacing Winuser.h library (./src/touchcontrol/_wrapper.py) 
 * run ./src/app.py
 
 ## Using the app
+* Define your screen environment in screen.py file (only supports multi-screen environments with screens next to each other, not on top of each other)
+* In graphics card driver, join screens to one big screen (e.g. mosaic, nvidia surround, ...)
 * Click "Start Camera" button" to start the camera
 * (optional) Click "Show Feed" button do display camera feed
 * Click "Enable TouchControl" button to give the program control over the touch screen

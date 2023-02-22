@@ -14,9 +14,12 @@ class InteractionController:
         self.infodata = infodata
 
         self.screens = SCREEN_SINGLE_ABOVE
+
+        self.screen_total_height = max([screen.px_height for screen in self.screens])
         self.screen_total_width = sum([screen.px_width for screen in self.screens])
 
         self.interaction_mechanism: InteractionMechanism = InteractionMechanism.SELECT_RIGHT_PAN_LEFT
+        self.pointing_mechanism: PointingMechanism = PointingMechanism.POINTER_TO_OBJECT
 
         self.touch_control_enabled = False
         self.show_camerafeed_enabled = False
@@ -65,6 +68,7 @@ class InteractionController:
         server.open_server()
 
         message = {
+            "centercross": True if self.pointing_mechanism == PointingMechanism.OBJECT_TO_POITNER else False,
             "right": {
                 "present": False,
                 "position": {
@@ -82,6 +86,8 @@ class InteractionController:
         }
 
         while True:
+            message["centercross"] = True if self.pointing_mechanism == PointingMechanism.OBJECT_TO_POITNER else False
+
             bodyresult: BodyResult = self.__tracker_controller.getBodyCaptureData()
 
             if self.show_camerafeed_enabled:
@@ -545,8 +551,12 @@ class InteractionController:
         if t_current - self.last_tap < 1.5:
             return
 
-        x_prev, y_prev = self.prev_lefthand_pointing
-        tc.tap((self.screen_total_width - x_prev, y_prev))
+        if self.pointing_mechanism == PointingMechanism.POINTER_TO_OBJECT:
+            x_prev, y_prev = self.prev_lefthand_pointing
+            tc.tap((self.screen_total_width - x_prev, y_prev))
+
+        if self.pointing_mechanism == PointingMechanism.OBJECT_TO_POITNER:
+            tc.tap((int(self.screen_total_width / 2), int(self.screen_total_height/2)))
 
         self.last_tap = time()
 
@@ -555,8 +565,12 @@ class InteractionController:
         if t_current - self.last_tap < 1.5:
             return
 
-        x_prev, y_prev = self.prev_righthand_pointing
-        tc.tap((self.screen_total_width - x_prev, y_prev))
+        if self.pointing_mechanism == PointingMechanism.POINTER_TO_OBJECT:
+            x_prev, y_prev = self.prev_righthand_pointing
+            tc.tap((self.screen_total_width - x_prev, y_prev))
+
+        if self.pointing_mechanism == PointingMechanism.OBJECT_TO_POITNER:
+            tc.tap((int(self.screen_total_width / 2), int(self.screen_total_height/2)))
 
         self.last_tap = time()
 

@@ -44,9 +44,9 @@ class MainWindow(GuibaseExtended):
     def on_selection_mechanism_changed(self, event):
         item = self.selection_mechanism_choice.GetSelection()
         if item == 0:
-            pass
-        if item == 1:
-            pass
+            self.interaction_controller.pointing_mechanism = PointingMechanism.POINTER_TO_OBJECT
+        elif item == 1:
+            self.interaction_controller.pointing_mechanism = PointingMechanism.OBJECT_TO_POITNER
 
     def on_screen_changed(self, event):
         item = self.screen_choice.GetSelection()

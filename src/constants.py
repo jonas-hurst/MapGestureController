@@ -9,6 +9,11 @@ class InteractionMechanism(Enum):
     SELECT_BOTH_PAN_BOTH = 2
 
 
+class PointingMechanism(Enum):
+    POINTER_TO_OBJECT = 0
+    OBJECT_TO_POITNER = 1
+
+
 class HandState(Enum):
     OPEN = 0
     CLOSED = 1

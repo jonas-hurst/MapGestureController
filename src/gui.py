@@ -41,6 +41,13 @@ class MainWindow(GuibaseExtended):
         elif item == 2:
             self.interaction_controller.interaction_mechanism = InteractionMechanism.SELECT_BOTH_PAN_BOTH
 
+    def on_selection_mechanism_changed(self, event):
+        item = self.selection_mechanism_choice.GetSelection()
+        if item == 0:
+            pass
+        if item == 1:
+            pass
+
     def on_screen_changed(self, event):
         item = self.screen_choice.GetSelection()
         if item == 0:

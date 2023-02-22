@@ -55,6 +55,11 @@ class Guibase ( wx.Frame ):
 		self.interaction_mechanism_choice.SetSelection( 0 )
 		bSizer1.Add( self.interaction_mechanism_choice, 0, wx.ALL|wx.EXPAND, 5 )
 
+		selection_mechanism_choiceChoices = [ u"Pointer to Object", u"Object to Pointer" ]
+		self.selection_mechanism_choice = wx.Choice( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, selection_mechanism_choiceChoices, 0 )
+		self.selection_mechanism_choice.SetSelection( 0 )
+		bSizer1.Add( self.selection_mechanism_choice, 0, wx.ALL|wx.EXPAND, 5 )
+
 		screen_choiceChoices = [ u"single screen above", u"single screen below", u"IVE" ]
 		self.screen_choice = wx.Choice( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, screen_choiceChoices, 0 )
 		self.screen_choice.SetSelection( 0 )
@@ -107,6 +112,7 @@ class Guibase ( wx.Frame ):
 		self.tgl_btn_touchcontrol.Bind( wx.EVT_TOGGLEBUTTON, self.on_tgl_touchcontrol )
 		self.calibrate_button.Bind( wx.EVT_BUTTON, self.on_calibrate )
 		self.interaction_mechanism_choice.Bind( wx.EVT_CHOICE, self.on_interaction_mechanism_chagned )
+		self.selection_mechanism_choice.Bind( wx.EVT_CHOICE, self.on_selection_mechanism_changed )
 		self.screen_choice.Bind( wx.EVT_CHOICE, self.on_screen_changed )
 
 	def __del__( self ):
@@ -130,6 +136,9 @@ class Guibase ( wx.Frame ):
 		event.Skip()
 
 	def on_interaction_mechanism_chagned( self, event ):
+		event.Skip()
+
+	def on_selection_mechanism_changed( self, event ):
 		event.Skip()
 
 	def on_screen_changed( self, event ):

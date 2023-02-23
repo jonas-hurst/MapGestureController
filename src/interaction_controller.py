@@ -184,8 +184,6 @@ class InteractionController:
             right_hand_pointing_to_screen,
             intersect_point_l,
             intersect_point_r)
-        # self.current_operation = self.detect_operation_distance(bodyresult, left_hand_pointing_to_screen, right_hand_pointing_to_screen)
-        # self.current_operation = self.detect_operation_angle(bodyresult, left_hand_pointing_to_screen, right_hand_pointing_to_screen)
 
         operation_transition: OperationTransition = self.get_operation_transition()
 
@@ -284,41 +282,6 @@ class InteractionController:
         self.left_hand_coords_history.pop()
         self.left_hand_coords_history.append(Point3D(0, 0, 0))
         return True
-
-    def detect_operation_distance(self, bodyresult: BodyResult, left_pointing: bool, right_pointing: bool) -> Operation:
-        """
-        Detect an operation based on distance of hand to something
-        :param bodyresult: object containing results from bodytracking
-        :param left_pointing: Bool Value indicating if left hand is pointing to screen
-        :param right_pointing: Bool Value indicating if right hand is pointing to screen
-        :return: The detected Operation
-        """
-        active_dist = 400
-        dist_nose_right = bodyresult.chest.distance(bodyresult.right_hand)
-        dist_nose_left = bodyresult.chest.distance(bodyresult.left_hand)
-        if left_pointing and right_pointing and dist_nose_right > active_dist and dist_nose_left > active_dist:
-            return Operation.ZOOM
-        if dist_nose_right > active_dist and right_pointing:
-            return Operation.PAN_RIGHTHAND
-        if dist_nose_left > active_dist and left_pointing:
-            return Operation.PAN_LEFTHAND
-        return Operation.IDLE
-
-    def detect_operation_angle(self, bodyresult: BodyResult, left_pointing: bool, right_pointing: bool) -> Operation:
-        """
-        Detect an operatino based on the angle formed at elbow
-        :param bodyresult: object containnig resutls from bodytracking
-        :param left_pointing: Bool value indicating if left hand is pointing to screen
-        :param right_pointing: Bool value indicating if right hand is pointing to screen
-        :return: The detected Operation
-        """
-        if left_pointing and right_pointing and bodyresult.left_elbow_angle > 120 and bodyresult.right_elbow_angle > 120:
-            return Operation.ZOOM
-        if right_pointing and bodyresult.right_elbow_angle > 120:
-            return Operation.PAN_RIGHTHAND
-        if left_pointing and bodyresult.left_elbow_angle > 120:
-            return Operation.PAN_LEFTHAND
-        return Operation.IDLE
 
     def get_operation_transition(self) -> OperationTransition:
         """

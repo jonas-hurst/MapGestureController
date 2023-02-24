@@ -137,37 +137,8 @@ class InteractionController:
         self.infodata["cut"] = self.__tracker_controller.minCutoff
         self.infodata["beta"] = self.__tracker_controller.beta
 
-        # Check if Right hand is pointing towards the screen
-        screen_x_r, screen_y_r, intersect_point_r = self.get_screen_intersection(bodyresult.right_pointer)
-        right_hand_pointing_to_screen = False
-        if screen_x_r == -1 and screen_y_r == -1:
-            message["right"]["present"] = False
-        else:
-            # prevent point jitter: if px-offset is <6 px compared to prev. frame, then use old values
-            if abs(screen_x_r - self.prev_righthand_pointing[0]) < 6:
-                screen_x_r = self.prev_righthand_pointing[0]
-            if abs(screen_y_r - self.prev_righthand_pointing[1]) < 6:
-                screen_y_r = self.prev_righthand_pointing[1]
-            message["right"]["present"] = True
-            message["right"]["position"]["x"] = screen_x_r
-            message["right"]["position"]["y"] = screen_y_r
-            right_hand_pointing_to_screen = True
-
-        # Check if Left hand is pointing towards the screen
-        screen_x_l, screen_y_l, intersect_point_l = self.get_screen_intersection(bodyresult.left_pointer)
-        left_hand_pointing_to_screen = False
-        if screen_x_l == -1 and screen_y_l == -1:
-            message["left"]["present"] = False
-        else:
-            # prevent point jitter: if px-offset is <6 px compared to prev. frame, then use old values
-            if abs(screen_x_l - self.prev_lefthand_pointing[0]) < 6:
-                screen_x_l = self.prev_lefthand_pointing[0]
-            if abs(screen_y_l - self.prev_lefthand_pointing[1]) < 6:
-                screen_y_l = self.prev_lefthand_pointing[1]
-            message["left"]["present"] = True
-            message["left"]["position"]["x"] = screen_x_l
-            message["left"]["position"]["y"] = screen_y_l
-            left_hand_pointing_to_screen = True
+        right_hand_pointing_to_screen, screen_x_r, screen_y_r, intersect_point_r = self.process_hand(bodyresult, Handednes.RIGHT, message)
+        left_hand_pointing_to_screen, screen_x_l, screen_y_l, intersect_point_l = self.process_hand(bodyresult, Handednes.LEFT, message)
 
         # Check if at least one hand is pointing to the screen.
         # If not, exit this method
@@ -199,6 +170,31 @@ class InteractionController:
 
         self.prev_righthand_pointing = (screen_x_r, screen_y_r)
         self.prev_lefthand_pointing = (screen_x_l, screen_y_l)
+
+    def process_hand(self, bodyresult: BodyResult, hand: Handednes, message: dict):
+        if hand == Handednes.INVALID:
+            raise ValueError("hand value is INVALID. Must bei either LEFT or RIGHT")
+
+        pointer = bodyresult.right_pointer if hand == Handednes.RIGHT else bodyresult.left_pointer
+        msg_hand = "right" if hand == Handednes.RIGHT else "left"
+        history = self.prev_righthand_pointing if hand == Handednes.RIGHT else self.prev_lefthand_pointing
+
+        screen_x, screen_y, intersect_point = self.get_screen_intersection(pointer)
+        hand_pointing_to_screen = False
+        if screen_x == -1 and screen_y == -1:
+            message[msg_hand]["present"] = False
+        else:
+            # prevent point jitter: if px-offset is <6 px compared to prev. frame, then use old values
+            if abs(screen_x - history[0]) < 6:
+                screen_x = history[0]
+            if abs(screen_y - history[1]) < 6:
+                screen_y = history[1]
+            message[msg_hand]["present"] = True
+            message[msg_hand]["position"]["x"] = screen_x
+            message[msg_hand]["position"]["y"] = screen_y
+            hand_pointing_to_screen = True
+
+        return hand_pointing_to_screen, screen_x, screen_y, intersect_point
 
     def get_screen_intersection(self, pointer: geom.Line) -> tuple[int, int, Point3D]:
         # Calculate the point in 3D-space wehre pointer-line and infinite screen-plain intersect

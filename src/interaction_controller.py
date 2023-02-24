@@ -99,7 +99,7 @@ class InteractionController:
             self.infodata["roll"] = round(self.__tracker_controller.roll * (180 / math.pi), 1)
 
             # Add Left Hand state to history
-            if len(self.left_hand_coords_history) > 2:
+            if len(self.left_hand_coords_history) > 3:
                 self.left_hand_coords_history.pop(0)
             try:
                 self.left_hand_coords_history.append(bodyresult.left_hand_tip)
@@ -107,7 +107,7 @@ class InteractionController:
                 self.left_hand_coords_history.append(Point3D(0, 0, 0))
 
             # Add Right hand state to history
-            if len(self.right_hand_coords_history) > 2:
+            if len(self.right_hand_coords_history) > 3:
                 self.right_hand_coords_history.pop(0)
             try:
                 self.right_hand_coords_history.append(bodyresult.right_hand_tip)
@@ -188,6 +188,12 @@ class InteractionController:
         operation_transition: OperationTransition = self.get_operation_transition()
 
         if self.touch_control_enabled:
+
+            if self.current_operation == Operation.SELECT_RIGHTHAND:
+                screen_x_r, screen_y_r = self.prev_righthand_pointing
+            if self.current_operation == Operation.SELECT_LEFTHAND:
+                screen_x_l, screen_y_l = self.prev_lefthand_pointing
+
             self.process_transition(operation_transition, screen_x_l, screen_y_l, screen_x_r, screen_y_r)
             self.process_operation(screen_x_l, screen_y_l, screen_x_r, screen_y_r)
 
@@ -243,7 +249,7 @@ class InteractionController:
                 return Operation.PAN_LEFTHAND
 
         if self.interaction_mechanism == InteractionMechanism.SELECT_LEFT_PAN_RIGHT or self.interaction_mechanism == InteractionMechanism.SELECT_BOTH_PAN_BOTH:
-            if left_pointing and self.detect_lefthand_selection(bodyresult):
+            if left_pointing and self.detect_lefthand_selection(bodyresult, intersect_point_l):
                 return Operation.SELECT_LEFTHAND
             if bodyresult.right_hand_state == HandState.CLOSED and right_pointing:
                 return Operation.PAN_RIGHTHAND
@@ -251,32 +257,52 @@ class InteractionController:
         return Operation.IDLE
 
     def detect_righthand_selection(self, bodyresult: BodyResult, intersection_point_r: Point3D) -> bool:
-        # Check if each hand point is closer to camera than the one before
-        if bodyresult.right_hand_state == HandState.CLOSED or bodyresult.left_hand_state == HandState.CLOSED:
-            return False
 
+        # if bodyresult.right_hand_state == HandState.CLOSED or bodyresult.left_hand_state == HandState.CLOSED:
+        #     return False
+
+        # Check if each hand point is closer to camera than the one before
+        intersection_point_r_plaine = Point3D(intersection_point_r.x, 0, intersection_point_r.z)
         for idx in range(len(self.right_hand_coords_history) - 1):
-            if self.right_hand_coords_history[idx].distance(intersection_point_r) <= self.right_hand_coords_history[idx+1].distance(intersection_point_r):
+            current_plaine = Point3D(self.right_hand_coords_history[idx].x, 0, self.right_hand_coords_history[idx].z)
+            next_plaine = Point3D(self.right_hand_coords_history[idx+1].x, 0, self.right_hand_coords_history[idx+1].z)
+            if current_plaine.distance(intersection_point_r_plaine) <= next_plaine.distance(intersection_point_r_plaine):
                 return False
+
+        oldest = self.right_hand_coords_history[0]
+        latest = self.right_hand_coords_history[-1]
+
+        if abs(oldest.y - latest.y) > 30:
+            return False
 
         # Last hand position must be closer to camera than the onx x frames ago.
         # Msut exceed threshold
-        if self.right_hand_coords_history[-1].distance(self.right_hand_coords_history[0]) < 40:
+        if Point3D(latest.x, 0, latest.z).distance(Point3D(oldest.x, 0, oldest.z)) < 40:
             return False
 
         self.right_hand_coords_history.pop()
         self.right_hand_coords_history.append(Point3D(0, 0, 0))
         return True
 
-    def detect_lefthand_selection(self, bodyresult: BodyResult) -> bool:
+    def detect_lefthand_selection(self, bodyresult: BodyResult, intersection_point_l: Point3D) -> bool:
+
         if bodyresult.left_hand_state == HandState.CLOSED or bodyresult.right_hand_state == HandState.CLOSED:
             return False
 
+        intersection_point_l_plaine = Point3D(intersection_point_l.x, 0, intersection_point_l.z)
         for idx in range(len(self.left_hand_coords_history) - 1):
-            if self.left_hand_coords_history[idx].z <= self.left_hand_coords_history[idx+1].z:
+            current_plaine = Point3D(self.left_hand_coords_history[idx].x, 0, self.left_hand_coords_history[idx].z)
+            next_plaine = Point3D(self.left_hand_coords_history[idx+1].x, 0, self.left_hand_coords_history[idx+1].z)
+            if current_plaine.distance(intersection_point_l_plaine) <= next_plaine.distance(intersection_point_l_plaine):
                 return False
 
-        if self.left_hand_coords_history[-1].distance(self.left_hand_coords_history[0]) < 40:
+        oldest = self.left_hand_coords_history[0]
+        latest = self.left_hand_coords_history[-1]
+
+        if abs(oldest.y - latest.y) > 30:
+            return False
+
+        if Point3D(latest.x, 0, latest.z).distance(Point3D(oldest.x, 0, oldest.z)) < 40:
             return False
 
         self.left_hand_coords_history.pop()

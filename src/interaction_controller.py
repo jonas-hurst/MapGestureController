@@ -258,8 +258,8 @@ class InteractionController:
 
     def detect_righthand_selection(self, bodyresult: BodyResult, intersection_point_r: Point3D) -> bool:
 
-        # if bodyresult.right_hand_state == HandState.CLOSED or bodyresult.left_hand_state == HandState.CLOSED:
-        #     return False
+        if bodyresult.right_hand_state == HandState.CLOSED or bodyresult.left_hand_state == HandState.CLOSED:
+            return False
 
         # Check if each hand point is closer to camera than the one before
         intersection_point_r_plaine = Point3D(intersection_point_r.x, 0, intersection_point_r.z)

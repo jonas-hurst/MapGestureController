@@ -228,3 +228,15 @@ class Plane3D:
         a, b, c = normal
         d = a * support_vector.x_dir + b * support_vector.y_dir + c * support_vector.z_dir
         return Plane3D(a, b, c, d)
+
+    @staticmethod
+    def from_orthogonal_and_point(orthogonal_vector: Vector3D, pnt: Point3D) -> Plane3D:
+        """
+        Contructs a new plane which is ortnogonal to a vector and contains a point
+        :param orthogonal: The vector the plane is supposed to be orthogonal to
+        :param pnt: the point that is contained within plane
+        :return: the resutling plane
+        """
+
+        d = np.dot(orthogonal_vector.coords, pnt.coords)
+        return Plane3D(orthogonal_vector.x_dir, orthogonal_vector.y_dir, orthogonal_vector.z_dir, d)

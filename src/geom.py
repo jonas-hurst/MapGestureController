@@ -144,6 +144,17 @@ class Line:
                f"\tSupporting Vector: {self.support_vector.__str__()}\n" \
                f"\tDirectional Vector: {self.directional_vector.__str__()}"
 
+    def get_orthogonal_vector_to_point(self, pnt: Point3D) -> Vector3D:
+        """
+        Method to compute the vector to a point which is orthogonal to the line
+        :param pnt: Point to which to vector is computed
+        :return: The vector
+        """
+        pln = Plane3D.from_orthogonal_and_point(self.directional_vector, pnt)
+        intersect: Point3D = pln.intersect_line(self)
+
+        return Vector3D.from_points(pnt, intersect)
+
     @staticmethod
     def from_points(point1: Point3D, point2: Point3D) -> Line:
         """

@@ -1,3 +1,5 @@
+import math
+
 from cameracontrol import *
 from screen import *
 import geom
@@ -35,6 +37,10 @@ class InteractionController:
         self.left_hand_coords_history: list[Point3D] = []
         self.prev_righthand_pointing = (1, -1)
         self.right_hand_coords_history: list[Point3D] = []
+
+        self.reference_screenpos_for_rel_pointing: Union[None, tuple[int, int]] = None
+        self.reference_handpos_for_rel_pointing: Union[None, Point3D] = None
+        self.reference_line_for_rel_pointing: Union[None, Line] = None
 
     def start_camera(self):
         camera_thread = threading.Thread(target=self.cameraloop, daemon=True)
@@ -171,28 +177,33 @@ class InteractionController:
         self.prev_righthand_pointing = (screen_x_r, screen_y_r)
         self.prev_lefthand_pointing = (screen_x_l, screen_y_l)
 
-    def process_hand(self, bodyresult: BodyResult, hand: Handednes, message: dict):
+    def process_hand(self, bodyresult: BodyResult, hand: Handednes, message: dict) -> tuple[bool, int, int, Point3D]:
         if hand == Handednes.INVALID:
             raise ValueError("hand value is INVALID. Must bei either LEFT or RIGHT")
 
         pointer = bodyresult.right_pointer if hand == Handednes.RIGHT else bodyresult.left_pointer
         msg_hand = "right" if hand == Handednes.RIGHT else "left"
-        history = self.prev_righthand_pointing if hand == Handednes.RIGHT else self.prev_lefthand_pointing
+        prev_screen_x, prev_screen_y = self.prev_righthand_pointing if hand == Handednes.RIGHT else self.prev_lefthand_pointing
+        current_handposition: Point3D = bodyresult.right_hand if hand == Handednes.RIGHT else bodyresult.left_hand
+        handstate = bodyresult.right_hand_state if hand == Handednes.RIGHT else bodyresult.left_hand_state
+        handstate_other = bodyresult.left_hand_state if hand == Handednes.RIGHT else bodyresult.left_hand_state
 
         screen_x, screen_y, intersect_point = self.get_screen_intersection(pointer)
-        hand_pointing_to_screen = False
-        if screen_x == -1 and screen_y == -1:
-            message[msg_hand]["present"] = False
-        else:
-            # prevent point jitter: if px-offset is <6 px compared to prev. frame, then use old values
-            if abs(screen_x - history[0]) < 6:
-                screen_x = history[0]
-            if abs(screen_y - history[1]) < 6:
-                screen_y = history[1]
-            message[msg_hand]["present"] = True
-            message[msg_hand]["position"]["x"] = screen_x
-            message[msg_hand]["position"]["y"] = screen_y
-            hand_pointing_to_screen = True
+
+        # Handle fine/relative pointing gesture if fist is detected
+        if handstate == HandState.CLOSED and handstate_other != HandState.CLOSED and (
+                (hand == Handednes.RIGHT and self.interaction_mechanism == InteractionMechanism.SELECT_RIGHT_PAN_LEFT) or
+                (hand == Handednes.LEFT and self.interaction_mechanism == InteractionMechanism.SELECT_LEFT_PAN_RIGHT)):
+            screen_x, screen_y = self.handle_fine_pointing(current_handposition, screen_x, screen_y, message, msg_hand)
+            return True, screen_x, screen_y, intersect_point
+
+        # Reset reference values, in case previous frame was fine/relative pointing
+        if ((hand == Handednes.RIGHT and self.interaction_mechanism == InteractionMechanism.SELECT_RIGHT_PAN_LEFT) or
+                (hand == Handednes.LEFT and self.interaction_mechanism == InteractionMechanism.SELECT_LEFT_PAN_RIGHT)):
+            self.reference_handpos_for_rel_pointing = None
+            self.reference_screenpos_for_rel_pointing = None
+
+        hand_pointing_to_screen, screen_x, screen_y = self.handle_coarse_pointing(screen_x, screen_y, prev_screen_x, prev_screen_y, message, msg_hand)
 
         return hand_pointing_to_screen, screen_x, screen_y, intersect_point
 
@@ -233,6 +244,47 @@ class InteractionController:
             return screen_x, screen_y, intersect_point
 
         return -1, -1, intersect_point
+
+    def handle_fine_pointing(self, current_handposition: Point3D, screen_x: int, screen_y: int, message: dict, msg_hand: str) -> tuple[int, int]:
+        # TODO: properly calculate intersectino point during slow pointing
+        if self.reference_handpos_for_rel_pointing is None:
+            self.reference_handpos_for_rel_pointing = current_handposition
+        if self.reference_screenpos_for_rel_pointing is None:
+            self.reference_screenpos_for_rel_pointing = (screen_x, screen_y)
+
+        rel_vector = Vector3D.from_points(self.reference_handpos_for_rel_pointing, current_handposition)
+        dx = math.sqrt(rel_vector.x_dir ** 2 + rel_vector.z_dir ** 2)
+        dy = int(rel_vector.y_dir)
+
+        slowdown_factor = 0.5
+        x_direction = -1 if rel_vector.x_dir <= 0 else 1
+        screen_x = self.reference_screenpos_for_rel_pointing[0] + int(slowdown_factor * dx * x_direction)
+        screen_y = self.reference_screenpos_for_rel_pointing[1] + int(slowdown_factor * dy)
+
+        message[msg_hand]["present"] = True
+        message[msg_hand]["position"]["x"] = screen_x
+        message[msg_hand]["position"]["y"] = screen_y
+
+        return screen_x, screen_y
+
+    def handle_coarse_pointing(self, screen_x: int, screen_y: int, prev_screen_x: int, prev_screen_y: int, message: dict, msg_hand: str):
+        hand_pointing_to_screen = True
+        if screen_x == -1 and screen_y == -1:
+            hand_pointing_to_screen = False
+            message[msg_hand]["present"] = False
+            return hand_pointing_to_screen, screen_x, screen_y
+
+        # prevent point jitter: if px-offset is <6 px compared to prev. frame, then use old values
+        if abs(screen_x - prev_screen_x) < 5:
+            screen_x = prev_screen_x
+        if abs(screen_y - prev_screen_y) < 5:
+            screen_y = prev_screen_y
+
+        message[msg_hand]["present"] = True
+        message[msg_hand]["position"]["x"] = screen_x
+        message[msg_hand]["position"]["y"] = screen_y
+
+        return hand_pointing_to_screen, screen_x, screen_y
 
     def detect_operation_handstate(self, bodyresult: BodyResult, left_pointing: bool, right_pointing: bool, intersect_point_l: Point3D, intersect_point_r: Point3D) -> Operation:
         if left_pointing and right_pointing and bodyresult.right_hand_state == HandState.CLOSED and bodyresult.left_hand_state == HandState.CLOSED:

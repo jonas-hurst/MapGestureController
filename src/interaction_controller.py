@@ -185,23 +185,24 @@ class InteractionController:
         msg_hand = "right" if hand == Handednes.RIGHT else "left"
         prev_screen_x, prev_screen_y = self.prev_righthand_pointing if hand == Handednes.RIGHT else self.prev_lefthand_pointing
         current_handposition: Point3D = bodyresult.right_hand if hand == Handednes.RIGHT else bodyresult.left_hand
+        other_handposition: Point3D = bodyresult.left_hand if hand == Handednes.RIGHT else bodyresult.right_hand
         handstate = bodyresult.right_hand_state if hand == Handednes.RIGHT else bodyresult.left_hand_state
         handstate_other = bodyresult.left_hand_state if hand == Handednes.RIGHT else bodyresult.left_hand_state
 
         screen_x, screen_y, intersect_point = self.get_screen_intersection(pointer)
 
+        if screen_x == -1 and screen_y == -1:
+            message[msg_hand]["present"] = False
+            return False, screen_x, screen_y, intersect_point
+
         # Handle fine/relative pointing gesture if fist is detected
-        if handstate == HandState.CLOSED and handstate_other != HandState.CLOSED and (
-                (hand == Handednes.RIGHT and self.interaction_mechanism == InteractionMechanism.SELECT_RIGHT_PAN_LEFT) or
-                (hand == Handednes.LEFT and self.interaction_mechanism == InteractionMechanism.SELECT_LEFT_PAN_RIGHT)):
+        if other_handposition.y < bodyresult.nose.y:
             screen_x, screen_y = self.handle_fine_pointing(current_handposition, screen_x, screen_y, message, msg_hand)
             return True, screen_x, screen_y, intersect_point
 
         # Reset reference values, in case previous frame was fine/relative pointing
-        if ((hand == Handednes.RIGHT and self.interaction_mechanism == InteractionMechanism.SELECT_RIGHT_PAN_LEFT) or
-                (hand == Handednes.LEFT and self.interaction_mechanism == InteractionMechanism.SELECT_LEFT_PAN_RIGHT)):
-            self.reference_handpos_for_rel_pointing = None
-            self.reference_screenpos_for_rel_pointing = None
+        self.reference_handpos_for_rel_pointing = None
+        self.reference_screenpos_for_rel_pointing = None
 
         hand_pointing_to_screen, screen_x, screen_y = self.handle_coarse_pointing(screen_x, screen_y, prev_screen_x, prev_screen_y, message, msg_hand)
 

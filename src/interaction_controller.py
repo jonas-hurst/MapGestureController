@@ -20,7 +20,7 @@ class InteractionController:
         self.screen_total_height = max([screen.px_height for screen in self.screens])
         self.screen_total_width = sum([screen.px_width for screen in self.screens])
 
-        self.interaction_mechanism: InteractionMechanism = InteractionMechanism.SELECT_RIGHT_PAN_LEFT
+        self.interaction_mechanism: InteractionMechanism = InteractionMechanism.SELECT_BOTH_PAN_BOTH
         self.pointing_mechanism: PointingMechanism = PointingMechanism.POINTER_TO_OBJECT
 
         self.touch_control_enabled = False

@@ -52,7 +52,9 @@ class Guibase ( wx.Frame ):
 
 		interaction_mechanism_choiceChoices = [ u"Select: right, Pan: left", u"Select: left, Pan: right", u"Select: both, Pan: both" ]
 		self.interaction_mechanism_choice = wx.Choice( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, interaction_mechanism_choiceChoices, 0 )
-		self.interaction_mechanism_choice.SetSelection( 0 )
+		self.interaction_mechanism_choice.SetSelection( 2 )
+		self.interaction_mechanism_choice.Enable( False )
+
 		bSizer1.Add( self.interaction_mechanism_choice, 0, wx.ALL|wx.EXPAND, 5 )
 
 		selection_mechanism_choiceChoices = [ u"Pointer to Object", u"Object to Pointer" ]

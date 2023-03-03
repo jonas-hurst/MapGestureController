@@ -187,14 +187,14 @@ class InteractionController:
         hand_pointing_to_screen_r, coords_r, intersect_point_r = self.process_hand(Handednes.RIGHT, bodyresult, message)
         hand_pointing_to_screen_l, coords_l, intersect_point_l = self.process_hand(Handednes.LEFT, bodyresult, message)
 
-        if hand_pointing_to_screen_r and not hand_pointing_to_screen_l and bodyresult.left_hand.y < bodyresult.nose.y:
+        if hand_pointing_to_screen_r and not hand_pointing_to_screen_l and bodyresult.left_hand.y < bodyresult.left_elbow.y:
             coords_r = self.handle_fine_pointing(bodyresult.right_hand, coords_r, message, "right")
         elif hand_pointing_to_screen_r:
             self.reference_screenpos_for_rel_pointing = None
             self.reference_handpos_for_rel_pointing = None
             coords_r = self.handle_coarse_pointing(coords_r, self.prev_righthand_pointing, message, "right")
 
-        if hand_pointing_to_screen_l and not hand_pointing_to_screen_r and bodyresult.right_hand.y < bodyresult.nose.y:
+        if hand_pointing_to_screen_l and not hand_pointing_to_screen_r and bodyresult.right_hand.y < bodyresult.right_elbow.y:
             coords_l = self.handle_fine_pointing(bodyresult.left_hand, coords_l, message, "left")
         elif hand_pointing_to_screen_l:
             self.reference_screenpos_for_rel_pointing = None

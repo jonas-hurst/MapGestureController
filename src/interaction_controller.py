@@ -77,6 +77,7 @@ class InteractionController:
             "centercross": True if self.pointing_mechanism == PointingMechanism.OBJECT_TO_POITNER else False,
             "right": {
                 "present": False,
+                "fine": False,
                 "position": {
                     "x": 0,
                     "y": 0
@@ -84,6 +85,7 @@ class InteractionController:
             },
             "left": {
                 "present": False,
+                "fine": False,
                 "position": {
                     "x": 0,
                     "y": 0
@@ -284,6 +286,7 @@ class InteractionController:
         screen_y = self.reference_screenpos_for_rel_pointing[1] + int(0.2 * (screen_y - self.reference_screenpos_for_rel_pointing[1]))
 
         message[msg_hand]["present"] = True
+        message[msg_hand]["fine"] = True
         message[msg_hand]["position"]["x"] = screen_x
         message[msg_hand]["position"]["y"] = screen_y
 
@@ -301,6 +304,7 @@ class InteractionController:
             screen_y = prev_screen_y
 
         message[msg_hand]["present"] = True
+        message[msg_hand]["fine"] = False
         message[msg_hand]["position"]["x"] = screen_x
         message[msg_hand]["position"]["y"] = screen_y
 

@@ -545,11 +545,15 @@ class InteractionController:
             return
         if transition == OperationTransition.ZOOM_TO_PANLEFT:
             self.transition_from_zoom()
-            self.transition_to_panleft(x_left, y_left)
+            # Do not transtino to panleft, can lead to false selection easily
+            # Reason: One hand from zoom is released slightly earlier than other -> interpreted as tap -> selection
+            #self.transition_to_panleft(x_left, y_left)
             return
         if transition == OperationTransition.ZOOM_TO_PANRIGHT:
             self.transition_from_zoom()
-            self.transition_to_panrigth(x_right, y_right)
+            # Do not transtino to panleft, can lead to false selection easily
+            # Reason: One hand from zoom is released slightly earlier than other -> interpreted as tap -> selection
+            #self.transition_to_panrigth(x_right, y_right)
             return
         if transition == OperationTransition.ZOOM_TO_IDLE:
             self.transition_from_zoom()

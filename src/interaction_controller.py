@@ -40,7 +40,6 @@ class InteractionController:
 
         self.reference_screenpos_for_rel_pointing: Union[None, tuple[int, int]] = None
         self.reference_handpos_for_rel_pointing: Union[None, Point3D] = None
-        self.reference_line_for_rel_pointing: Union[None, Line] = None
 
     def start_camera(self):
         camera_thread = threading.Thread(target=self.cameraloop, daemon=True)

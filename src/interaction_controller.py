@@ -273,15 +273,6 @@ class InteractionController:
         if self.reference_screenpos_for_rel_pointing is None:
             self.reference_screenpos_for_rel_pointing = (screen_x, screen_y)
 
-        # rel_vector = Vector3D.from_points(self.reference_handpos_for_rel_pointing, current_handposition)
-        # dx = math.sqrt(rel_vector.x_dir ** 2 + rel_vector.z_dir ** 2)
-        # dy = int(rel_vector.y_dir)
-        #
-        # slowdown_factor = 0.5
-        # x_direction = -1 if rel_vector.x_dir <= 0 else 1
-        # screen_x = self.reference_screenpos_for_rel_pointing[0] + int(slowdown_factor * dx * x_direction)
-        # screen_y = self.reference_screenpos_for_rel_pointing[1] + int(slowdown_factor * dy)
-
         screen_x = self.reference_screenpos_for_rel_pointing[0] + int(0.2 * (screen_x - self.reference_screenpos_for_rel_pointing[0]))
         screen_y = self.reference_screenpos_for_rel_pointing[1] + int(0.2 * (screen_y - self.reference_screenpos_for_rel_pointing[1]))
 

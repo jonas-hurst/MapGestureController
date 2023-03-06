@@ -116,13 +116,13 @@ SCREENS_IVE: tuple[Screen, Screen, Screen] = (
 
     # middle screen
     Screen(1,
-           Point3D(-1100, -1640, -1),
+           Point3D(-1100, -1640, -1),  # z=-1 to prevent rounding issues when checking for point within bbox
            Point3D( 1100,  -360, 0),
            1920, 1080),
 
     # right screen
     Screen(2,
-           Point3D(-1209, -1640, 0),
+           Point3D(-1209, -1640, -1),  # z=-1 to be consistent with middle screen
            Point3D(-1100,  -360, 1890),
            1920, 1080)
 )

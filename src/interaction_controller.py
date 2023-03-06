@@ -8,6 +8,10 @@ from constants import *
 import touchcontrol as tc
 
 
+class CameraException(Exception):
+    pass
+
+
 class InteractionController:
     def __init__(self, guicontext, infodata):
 
@@ -42,6 +46,12 @@ class InteractionController:
         self.reference_handpos_for_rel_pointing: Union[None, Point3D] = None
 
     def start_camera(self):
+        camera_numbers = self.__tracker_controller.get_camera_count()
+        if camera_numbers < 1:
+            raise CameraException("No camera detected")
+        if camera_numbers > 1:
+            raise CameraException("Multiple cameras not supported")
+
         camera_thread = threading.Thread(target=self.cameraloop, daemon=True)
         self.__tracker_controller.initialize_tracking()
         camera_thread.start()

@@ -122,6 +122,9 @@ class TrackerController:
         self.__keypoint_classifier = KeyPointClassifier()
         self.camera_running = True
 
+    def get_camera_count(self):
+        return pykinect.Device.device_get_installed_count()
+
     def startCamera(self):
         device_config = pykinect.default_configuration
         device_config.color_resolution = pykinect.K4A_COLOR_RESOLUTION_1080P

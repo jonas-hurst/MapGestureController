@@ -15,6 +15,8 @@ class CameraException(Exception):
 class InteractionController:
     def __init__(self, guicontext, infodata):
 
+        self.cameraloop_thread: Union[threading.Thread, None] = None
+
         self.guicontext = guicontext
 
         self.infodata = infodata
@@ -52,13 +54,14 @@ class InteractionController:
         if camera_numbers > 1:
             raise CameraException("Multiple cameras not supported")
 
-        camera_thread = threading.Thread(target=self.cameraloop, daemon=True)
+        self.cameraloop_thread = threading.Thread(target=self.cameraloop, daemon=True)
         self.__tracker_controller.initialize_tracking()
-        camera_thread.start()
+        self.cameraloop_thread.start()
 
     def stop_camera(self):
         if self.__tracker_controller.camera_running:
             self.__tracker_controller.camera_running = False
+            self.cameraloop_thread.join()  # wait for cameraloop thread to finnish its last iteratino
             self.__tracker_controller.stopDevice()
 
     def toggle_show_camerafeed(self, visualize: bool):

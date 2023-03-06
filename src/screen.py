@@ -108,14 +108,19 @@ SCREEN_SINGLE_ABOVE: tuple[Screen] = (Screen(3,
 # Multi-Screen Setup: IVE Screens
 # Small Z offset in screen 1 (z=-1) to prevent rounding issues
 SCREENS_IVE: tuple[Screen, Screen, Screen] = (
+    # left screen
     Screen(0,
            Point3D(1100, -1640, 0),
            Point3D(1209,  -360, 1890),
            1920, 1080),
+
+    # middle screen
     Screen(1,
            Point3D(-1100, -1640, -1),
            Point3D( 1100,  -360, 0),
            1920, 1080),
+
+    # right screen
     Screen(2,
            Point3D(-1209, -1640, 0),
            Point3D(-1100,  -360, 1890),

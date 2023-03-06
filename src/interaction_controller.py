@@ -253,6 +253,8 @@ class InteractionController:
             except ValueError:
                 continue
 
+        # TODO: Properly calculate pixel position, do not hard-code them like done below
+
         # No intersection with any screen
         if screen_id == -1:
             return -1, -1, intersect_point

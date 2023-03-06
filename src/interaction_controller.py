@@ -241,7 +241,9 @@ class InteractionController:
         intersect_point = Point3D(-1, -1, -1)
         for screen in self.screens:
             try:
-                intersect_point = screen.screen_plain.intersect_line(pointer)
+                intersect_point, behind = screen.screen_plain.intersect_line(pointer)
+                if behind:
+                    continue
             except geom.ParallelError:
                 continue
 

@@ -151,7 +151,7 @@ class Line:
         :return: The vector
         """
         pln = Plane3D.from_orthogonal_and_point(self.directional_vector, pnt)
-        intersect: Point3D = pln.intersect_line(self)
+        intersect, _ = pln.intersect_line(self)
 
         return Vector3D.from_points(pnt, intersect)
 
@@ -197,11 +197,11 @@ class Plane3D:
         test_val = self.a*pnt.x + self.b*pnt.y + self.c*pnt.z
         return abs(test_val - self.d) < epsilon
 
-    def intersect_line(self, line: Line) -> Point3D:
+    def intersect_line(self, line: Line) -> tuple[Point3D, bool]:
         """
         Method to intersect the plane with a line
         :param line: The line to intersect the plane
-        :return: Point at which the intersection occurs
+        :return: Point at which the intersection occurs, bool value indicating if Point is in negative line direction
         """
         if Vector3D.check_orthogonal(Vector3D(self.a, self.b, self.c), line.directional_vector):
             raise ParallelError("Plane and Line are parallel. An intersection point is therefore not possible")
@@ -219,7 +219,7 @@ class Plane3D:
 
         r_val = numerator / denominator
         int_point = line.support_vector.coords + r_val * line.directional_vector.coords
-        return Point3D(int_point[0], int_point[1], int_point[2])
+        return Point3D(int_point[0], int_point[1], int_point[2]), r_val < 0
 
     @staticmethod
     def from_vectors(support_vector: Vector3D, dir_vector_1: Vector3D, dir_vector_2: Vector3D) -> Plane3D:

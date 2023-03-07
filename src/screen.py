@@ -73,7 +73,7 @@ class Screen:
 
     def coords_to_px(self, point: Point3D) -> (int, int):
         """
-        Method to convert a point on screen to its pixel value
+        Method to convert a point on screen to its pixel value. Error if Point is not on screen.
         :param point: The point to convert to pixel values
         :return: Pixel values for point. Length 2 tuple, two ints. First value is x, second one is y
         """
@@ -85,6 +85,28 @@ class Screen:
         point_vector = Vector3D.from_points(self.lower_left_corner, point)
         height_px = point_vector.y_dir * (self.px_height / self.screen_height)
         width_px = Vector3D(point_vector.x_dir, 0, point_vector.z_dir).get_magnitude() * (self.px_width / self.screen_width)
+        return int(width_px), int(height_px)
+
+    def coords_to_px_space(self, point: Point3D) -> (int, int):
+        """
+        Method to convert a point on the screen plaine to pixel values.
+        Point must be on screen plaine, but  not necessarily on screen itself.
+        Returned coordinates can be out of screen bounds
+        :param point: Point to be converted to pixel values
+        :return: Pixel values for point. Length 2 tuple, two ints. First value is x, second one is y
+        """
+        if not self.screen_plain.contains_point(point, epsilon=0.0001):
+            raise ValueError("Point not in screen plaine")
+
+        # Sign doesnt transfer to ALL possible screen setups!!!!
+        if point.x < self.lower_left_corner.x:
+            multi = -1
+        else:
+            multi = 1
+
+        point_vector = Vector3D.from_points(self.lower_left_corner, point)
+        height_px = point_vector.y_dir * (self.px_height / self.screen_height)
+        width_px = Vector3D(point_vector.x_dir, 0, point_vector.z_dir).get_magnitude() * (self.px_width / self.screen_width) * multi
         return int(width_px), int(height_px)
 
 

@@ -14,8 +14,7 @@ class Server(object):
     def open_server(self):
         self.__server = WebsocketServer(host=self.host, port=self.port)
         self.__server.set_fn_new_client(_new_client)
-        t = threading.Thread(target=self.__server.run_forever, daemon=True)
-        t.start()
+        self.__server.run_forever(True)
 
     def close_server(self):
         self.__server.shutdown_gracefully()

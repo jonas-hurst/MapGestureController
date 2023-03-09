@@ -44,8 +44,10 @@ class InteractionController:
         self.prev_righthand_pointing = (1, -1)
         self.right_hand_coords_history: list[Point3D] = []
 
+        # Properties needed for relative fine pointing mechanism
         self.right_hand_relative_pointing: bool = False
         self.left_hand_relative_pointing: bool = False
+        self.reference_screen_point_for_rel_pointing: Union[None, Point3D] = None
         self.reference_screenpos_for_rel_pointing: Union[None, tuple[int, int]] = None
         self.reference_handpos_for_rel_pointing: Union[None, Point3D] = None
         self.reference_screen_for_rel_pointing: Union[None, Screen] = None
@@ -211,12 +213,15 @@ class InteractionController:
                 self.reference_handpos_for_rel_pointing = bodyresult.right_hand
             if self.reference_screenpos_for_rel_pointing is None:
                 self.reference_screenpos_for_rel_pointing = coords_r
-            coords_r = self.handle_fine_pointing(bodyresult.right_pointer, message, "right")
+            if self.reference_screen_point_for_rel_pointing is None:
+                self.reference_screen_point_for_rel_pointing = intersect_point_r
+            hand_pointing_to_screen_r, coords_r = self.handle_fine_pointing(bodyresult.pointer_start, bodyresult.pointer_end_right, message, "right")
         elif hand_pointing_to_screen_r:
             self.right_hand_relative_pointing = False
             self.reference_screenpos_for_rel_pointing = None
             self.reference_handpos_for_rel_pointing = None
             self.reference_screen_for_rel_pointing = None
+            self.reference_screen_point_for_rel_pointing = None
             coords_r = self.handle_coarse_pointing(coords_r, self.prev_righthand_pointing, message, "right")
 
         if (hand_pointing_to_screen_l or self.left_hand_relative_pointing) and not hand_pointing_to_screen_r \
@@ -228,12 +233,15 @@ class InteractionController:
                 self.reference_handpos_for_rel_pointing = bodyresult.left_hand
             if self.reference_screenpos_for_rel_pointing is None:
                 self.reference_screenpos_for_rel_pointing = coords_l
-            coords_l = self.handle_fine_pointing(bodyresult.left_pointer, message, "left")
+            if self.reference_screen_point_for_rel_pointing is None:
+                self.reference_screen_point_for_rel_pointing = intersect_point_l
+            hand_pointing_to_screen_l, coords_l = self.handle_fine_pointing(bodyresult.pointer_start, bodyresult.pointer_end_left, message, "left")
         elif hand_pointing_to_screen_l:
             self.left_hand_relative_pointing = False
             self.reference_screenpos_for_rel_pointing = None
             self.reference_handpos_for_rel_pointing = None
             self.reference_screen_for_rel_pointing = None
+            self.reference_screen_point_for_rel_pointing = None
             coords_l = self.handle_coarse_pointing(coords_l, self.prev_lefthand_pointing, message, "left")
 
         result_righthand = (hand_pointing_to_screen_r, coords_r, intersect_point_r)
@@ -306,22 +314,47 @@ class InteractionController:
 
         return intersection_screen, -1, -1, intersect_point
 
-    def handle_fine_pointing(self, pointer: Line, message: dict, msg_hand: str) -> tuple[int, int]:
+    def handle_fine_pointing(self, pointer_start: Point3D, pointer_end: Point3D, message: dict, msg_hand: str) -> tuple[bool, tuple[int, int]]:
 
-        # TODO: Correct for pointing very far away on screen plaine. Use cyclic setup instead of infinitely large plaine???
+        h_pointer_start_screenpoint = Vector3D.from_points(
+            Point3D(pointer_start.x, 0, pointer_start.z),
+            Point3D(self.reference_screen_point_for_rel_pointing.x, 0, self.reference_screen_point_for_rel_pointing.z))
+        h_pointer_start_end = Vector3D.from_points(
+            Point3D(pointer_start.x, 0, pointer_start.z),
+            Point3D(pointer_end.x, 0, pointer_end.z))
+        h_sign = 1 if self.reference_handpos_for_rel_pointing.x < pointer_end.x else -1
+        h_angle = h_pointer_start_screenpoint.get_angle(h_pointer_start_end) * h_sign
 
-        intersection_point, _ = self.reference_screen_for_rel_pointing.screen_plain.intersect_line(pointer)
-        screen_x, screen_y = self.reference_screen_for_rel_pointing.coords_to_px_space(intersection_point)
+        v_pointer_start_screenpoint = Vector3D.from_points(
+            Point3D(0, pointer_start.y, pointer_start.z),
+            Point3D(0, self.reference_screen_point_for_rel_pointing.y, self.reference_screen_point_for_rel_pointing.z)
+        )
+        v_pointer_start_end = Vector3D.from_points(
+            Point3D(0, pointer_start.y, pointer_start.z),
+            Point3D(0, pointer_end.y, pointer_end.z)
+        )
+        v_sign = -1 if self.reference_handpos_for_rel_pointing.y > pointer_end.y else 1
+        v_angle = v_pointer_start_screenpoint.get_angle(v_pointer_start_end) * v_sign
 
-        screen_x = self.reference_screenpos_for_rel_pointing[0] + int(0.1 * (screen_x - self.reference_screenpos_for_rel_pointing[0]))
-        screen_y = self.reference_screenpos_for_rel_pointing[1] + int(0.1 * (screen_y - self.reference_screenpos_for_rel_pointing[1]))
+        radius = pointer_start.distance(self.reference_screen_point_for_rel_pointing)
+        h_segment_length = h_angle * radius
+        v_segment_length = v_angle * radius
+
+        slowdown = 0.1
+        dx = int(slowdown * h_segment_length * (self.reference_screen_for_rel_pointing.px_width / self.reference_screen_for_rel_pointing.screen_width))
+        dy = int(slowdown * v_segment_length * (self.reference_screen_for_rel_pointing.px_height / self.reference_screen_for_rel_pointing.screen_height))
+
+        screen_x = self.reference_screenpos_for_rel_pointing[0] + dx
+        screen_y = self.reference_screenpos_for_rel_pointing[1] + dy
 
         message[msg_hand]["present"] = True
         message[msg_hand]["fine"] = True
         message[msg_hand]["position"]["x"] = screen_x
         message[msg_hand]["position"]["y"] = screen_y
 
-        return screen_x, screen_y
+        pointing_to_screen = True if (0 <= screen_x < self.screen_total_width) and (0 <= screen_y <= self.screen_total_height) else False
+
+        return pointing_to_screen, (screen_x, screen_y)
 
     def handle_coarse_pointing(self, coords: tuple[int, int], prev_coords: tuple[int, int], message: dict, msg_hand: str) -> tuple[int, int]:
 

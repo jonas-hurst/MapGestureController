@@ -88,11 +88,14 @@ class Vector3D:
         """
         try:
             a = math.acos(np.dot(self.coords, vector.coords) / (self.get_magnitude() * vector.get_magnitude()))
+            return a
         except ValueError as e:
             # catch ValueError: Math doamain error thrown by math.acos if zähler > nenner.
             # Happens due to float rounding issues if both vectors are the same
-            return 0
-        return a
+            if np.dot(self.coords, vector.coords) > self.get_magnitude() * vector.get_magnitude():
+                return 0
+            else:
+                return math.pi
 
     @staticmethod
     def check_parallel(v1: Vector3D, v2: Vector3D, epsilon: float = 0.0001) -> bool:

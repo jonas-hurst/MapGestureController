@@ -86,7 +86,12 @@ class Vector3D:
         :param vector: The other vector
         :return: The angle
         """
-        a = math.acos(np.dot(self.coords, vector.coords) / (self.get_magnitude() * vector.get_magnitude()))
+        try:
+            a = math.acos(np.dot(self.coords, vector.coords) / (self.get_magnitude() * vector.get_magnitude()))
+        except ValueError as e:
+            # catch ValueError: Math doamain error thrown by math.acos if zähler > nenner.
+            # Happens due to float rounding issues if both vectors are the same
+            return 0
         return a
 
     @staticmethod

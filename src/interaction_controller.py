@@ -171,6 +171,13 @@ class InteractionController:
         # Check if at least one hand is pointing to the screen.
         # If not, exit this method
         if not right_hand_pointing_to_screen and not left_hand_pointing_to_screen:
+            self.right_hand_relative_pointing = False
+            self.left_hand_relative_pointing = False
+            self.reference_screen_point_for_rel_pointing= None
+            self.reference_screenpos_for_rel_pointing = None
+            self.reference_handpos_for_rel_pointing = None
+            self.reference_screen_for_rel_pointing = None
+
             self.previous_operation = self.current_operation
             self.current_operation = Operation.IDLE
             return
@@ -279,7 +286,7 @@ class InteractionController:
                                      1, 1)
         for screen in self.screens:
             try:
-                intersect_point, behind = screen.screen_plain.intersect_line(pointer)
+                intersect_point_temp, behind = screen.screen_plain.intersect_line(pointer)
                 if behind:
                     continue
             except geom.ParallelError:
@@ -288,9 +295,10 @@ class InteractionController:
             # If line-plain intersection point is on screen, try-block is executed
             # If it is not, except block executes.
             try:
-                screen_x, screen_y = screen.coords_to_px(intersect_point)
+                screen_x, screen_y = screen.coords_to_px(intersect_point_temp)
                 screen_id = screen.screen_id
                 intersection_screen = screen
+                intersect_point = intersect_point_temp
             except ValueError:
                 continue
 

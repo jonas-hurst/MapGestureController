@@ -312,6 +312,9 @@ class InteractionController:
         if screen_id == 3:
             return intersection_screen, screen_x, screen_y, intersect_point
 
+        if screen_id == 4:
+            return intersection_screen, 960 + screen_x, screen_y, intersect_point
+
         return intersection_screen, -1, -1, intersect_point
 
     def handle_fine_pointing(self, pointer_start: Point3D, pointer_end: Point3D, message: dict, msg_hand: str) -> tuple[bool, tuple[int, int]]:

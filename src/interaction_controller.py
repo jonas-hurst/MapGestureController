@@ -7,6 +7,7 @@ from websocketserver import Server
 from constants import *
 import touchcontrol as tc
 
+import typing
 
 class CameraException(Exception):
     pass
@@ -53,6 +54,11 @@ class InteractionController:
         self.reference_screen_for_rel_pointing: Union[None, Screen] = None
 
     def start_camera(self):
+        """
+        Initializes and starts the camera.
+        After initialization, cameraloop starts executing in a new thread.
+        :return: None
+        """
         camera_numbers = self.__tracker_controller.get_camera_count()
         if camera_numbers < 1:
             raise CameraException("No camera detected")
@@ -64,32 +70,42 @@ class InteractionController:
         self.cameraloop_thread.start()
 
     def stop_camera(self):
+        """ Stops the thread in which camera feed is processed. """
         if self.__tracker_controller.camera_running:
             self.__tracker_controller.camera_running = False
             self.cameraloop_thread.join()  # wait for cameraloop thread to finnish its last iteratino
             self.__tracker_controller.stopDevice()
 
     def toggle_show_camerafeed(self, visualize: bool):
+        """ Initiates the camerafeed showing on screen. """
         self.show_camerafeed_enabled = visualize
         self.__tracker_controller.visualize = visualize
 
     def set_screen_environment(self, screens: tuple[Screen, ...]):
+        """ Sets a new screen environment. """
         self.screens = screens
         self.screen_total_width = sum([screen.px_width for screen in self.screens])
 
-    def get_1euro_min_cutoff(self):
+    def get_1euro_min_cutoff(self) -> float:
+        """ Gets the current Minimum cutoff frequency value used in 1€ filters. """
         return self.__tracker_controller.minCutoff
 
-    def get_1euro_beta_value(self):
+    def get_1euro_beta_value(self) -> float:
+        """ Gets the current beta value used in 1€ filters. """
         return self.__tracker_controller.beta
 
-    def get_1euro_tune_function(self):
+    def get_1euro_tune_function(self) -> typing.Callable[[float, float], None]:
+        """ Gets the function that is used to tune 1€ filters. """
         return self.__tracker_controller.tune_filters
 
     def cameraloop(self):
+        """ Captuers and processes camera feed. """
+
+        # Start websocket server to communicate with Chrome extension
         server = Server()
         server.open_server()
 
+        # Initialize message to be sent through websocket server
         message = {
             "centercross": True if self.pointing_mechanism == PointingMechanism.OBJECT_TO_POITNER else False,
             "right": {
@@ -110,20 +126,26 @@ class InteractionController:
             }
         }
 
+        # Loop to continuously captuer camera feed
         while True:
+
+            # update websocket message to display cross in center in feature-to-pointer method
             message["centercross"] = True if self.pointing_mechanism == PointingMechanism.OBJECT_TO_POITNER else False
 
+            # Get result of body tracking
             bodyresult: BodyResult = self.__tracker_controller.getBodyCaptureData()
 
+            # Show camerafeed in GUI (if enabled)
             if self.show_camerafeed_enabled:
                 self.guicontext.set_bitmap(self.__tracker_controller.color_image_rgb)
 
+            # Update infodata dictionary (will show in grid in GUI)
             self.infodata["fps"] = self.__tracker_controller.fps
             self.infodata["bodies"] = self.__tracker_controller.number_tracked_bodies
             self.infodata["pitch"] = round(self.__tracker_controller.pitch * (180 / math.pi), 1)
             self.infodata["roll"] = round(self.__tracker_controller.roll * (180 / math.pi), 1)
 
-            # Add Left Hand state to history
+            # Add Left Hand coordinates to history
             if len(self.left_hand_coords_history) > 3:
                 self.left_hand_coords_history.pop(0)
             try:
@@ -131,7 +153,7 @@ class InteractionController:
             except AttributeError:
                 self.left_hand_coords_history.append(Point3D(0, 0, 0))
 
-            # Add Right hand state to history
+            # Add Right hand coords to history
             if len(self.right_hand_coords_history) > 3:
                 self.right_hand_coords_history.pop(0)
             try:
@@ -140,28 +162,41 @@ class InteractionController:
                 self.right_hand_coords_history.append(Point3D(0, 0, 0))
 
             if bodyresult is not None:
+                # Process results from body tracking
                 self.process_bodyresult(bodyresult, message)
             else:
                 message["right"]["present"] = False
                 message["left"]["present"] = False
                 tc.finger_up()
 
+            # update infodata dict
             self.infodata["operation"] = self.current_operation.name
 
-            server.send_json(message)
-            self.guicontext.set_datagrid_values(self.infodata)
+            server.send_json(message)  # send message through websocket
+            self.guicontext.set_datagrid_values(self.infodata)  # update datagrid in gui with info data
 
+            # break cameraloop
             if not self.__tracker_controller.camera_running:
                 break
 
+        # Close websocket server
         server.close_server()
 
     def process_bodyresult(self, bodyresult, message):
+        """
+        Method to process results of body tracking
+        :param bodyresult: Result from bodytracking
+        :param message: Message template for websocket connection
+        :return: None
+        """
+
+        # update dictionary for infidata
         self.infodata["left"] = bodyresult.left_hand_state.name
         self.infodata["right"] = bodyresult.right_hand_state.name
         self.infodata["cut"] = self.__tracker_controller.minCutoff
         self.infodata["beta"] = self.__tracker_controller.beta
 
+        # Detect where operator is pointing at
         right_handresult, left_handresult = self.process_hands(bodyresult, message)
         right_hand_pointing_to_screen, coords_r, intersect_point_r = right_handresult
         screen_x_r, screen_y_r = coords_r
@@ -193,8 +228,10 @@ class InteractionController:
 
         operation_transition: OperationTransition = self.get_operation_transition()
 
+        # Translate detected operations into touch screen API injections
         if self.touch_control_enabled:
 
+            # use previous screen values for SELECT "tap" at location where user poitned at before action started
             if self.current_operation == Operation.SELECT_RIGHTHAND:
                 screen_x_r, screen_y_r = self.prev_righthand_pointing
             if self.current_operation == Operation.SELECT_LEFTHAND:
@@ -207,12 +244,21 @@ class InteractionController:
         self.prev_lefthand_pointing = (screen_x_l, screen_y_l)
 
     def process_hands(self, bodyresult: BodyResult, message: dict) -> tuple[tuple[bool, tuple[int, int], Point3D], tuple[bool, tuple[int, int], Point3D]]:
+        """
+        Detects where the user is pointing at on screen
+        :param bodyresult: Result from body tracking
+        :param message: Message dict to be sent to websocket server
+        :return: Location of left and right hand wehre user is pointing at:
+        Bool if pointing at all, tuple of ints with px-coordinates, point in 3d-space
+        """
 
+        # Get location where user is pointing at
         screen_r, hand_pointing_to_screen_r, coords_r, intersect_point_r = self.process_hand(Handednes.RIGHT, bodyresult, message)
         screen_l, hand_pointing_to_screen_l, coords_l, intersect_point_l = self.process_hand(Handednes.LEFT, bodyresult, message)
 
         if (hand_pointing_to_screen_r or self.right_hand_relative_pointing) and not hand_pointing_to_screen_l \
-                and not self.left_hand_relative_pointing and bodyresult.left_hand.y < bodyresult.left_elbow.y:
+                and not self.left_hand_relative_pointing and bodyresult.left_hand.y < bodyresult.nose.y:
+            # Handle Slow (fine) pointing mode for right hand
             self.right_hand_relative_pointing = True
             if self.reference_screen_for_rel_pointing is None:
                 self.reference_screen_for_rel_pointing = screen_r
@@ -224,6 +270,7 @@ class InteractionController:
                 self.reference_screen_point_for_rel_pointing = intersect_point_r
             hand_pointing_to_screen_r, coords_r = self.handle_fine_pointing(bodyresult.pointer_start, bodyresult.pointer_end_right, message, "right")
         elif hand_pointing_to_screen_r:
+            # Handle normal pointing mode for right hand
             self.right_hand_relative_pointing = False
             self.reference_screenpos_for_rel_pointing = None
             self.reference_handpos_for_rel_pointing = None
@@ -232,7 +279,8 @@ class InteractionController:
             coords_r = self.handle_coarse_pointing(coords_r, self.prev_righthand_pointing, message, "right")
 
         if (hand_pointing_to_screen_l or self.left_hand_relative_pointing) and not hand_pointing_to_screen_r \
-                and not self.right_hand_relative_pointing and bodyresult.right_hand.y < bodyresult.right_elbow.y:
+                and not self.right_hand_relative_pointing and bodyresult.right_hand.y < bodyresult.nose.y:
+            # Handle Slow (fine) pointing mode for left hand
             self.left_hand_relative_pointing = True
             if self.reference_screen_for_rel_pointing is None:
                 self.reference_screen_for_rel_pointing = screen_l
@@ -244,6 +292,7 @@ class InteractionController:
                 self.reference_screen_point_for_rel_pointing = intersect_point_l
             hand_pointing_to_screen_l, coords_l = self.handle_fine_pointing(bodyresult.pointer_start, bodyresult.pointer_end_left, message, "left")
         elif hand_pointing_to_screen_l:
+            # Handle normal pointing mode for left hand
             self.left_hand_relative_pointing = False
             self.reference_screenpos_for_rel_pointing = None
             self.reference_handpos_for_rel_pointing = None
@@ -257,6 +306,15 @@ class InteractionController:
         return result_righthand, result_lefthand
 
     def process_hand(self, hand: Handednes, bodyresult: BodyResult, message: dict) -> tuple[Screen, bool, tuple[int, int], Point3D]:
+        """
+        Detects whether a user's arm is pointing at the screen
+        :param hand: Hand which should be considered
+        :param bodyresult: Result of body tracking
+        :param message: Message to be sent through websocket server
+        :return: Location where the hand is pointing:
+        Screen that is pointed at, bool if pointing at all tupoe of ints with px-coordinates, point in 3d space
+        """
+
         if hand == Handednes.INVALID:
             raise ValueError("hand value is INVALID. Must bei either LEFT or RIGHT")
 
@@ -275,8 +333,13 @@ class InteractionController:
         return screen, hand_pointing_to_screen, coords, intersect_point
 
     def get_screen_intersection(self, pointer: geom.Line) -> tuple[Screen, int, int, Point3D]:
-        # Calculate the point in 3D-space wehre pointer-line and infinite screen-plain intersect
-        # A check whether this point is on screen occurs later
+        """
+        Calculates location on screen where operator is pointing at.
+        :param pointer: Line that is used to calculate intersection
+        :return: Lcoation: Screen, px-coordiantes x and y, point in 3d-space
+        """
+
+        # Default values to be returned if no intersection occurs
         screen_id = -1
         screen_x, screen_y = -1, -1
         intersect_point = Point3D(-1, -1, -1)
@@ -284,12 +347,16 @@ class InteractionController:
                                      Point3D(-1, -1, -1),
                                      Point3D(1, 1, 1),
                                      1, 1)
+
         for screen in self.screens:
+            # Calculate the point in 3D-space wehre pointer-line and infinite screen-plain intersect
             try:
                 intersect_point_temp, behind = screen.screen_plain.intersect_line(pointer)
                 if behind:
+                    # dont consider if intersectino occurs behind the user
                     continue
             except geom.ParallelError:
+                # dont consider if user poitns parallel to screen plaine
                 continue
 
             # If line-plain intersection point is on screen, try-block is executed
@@ -326,7 +393,16 @@ class InteractionController:
         return intersection_screen, -1, -1, intersect_point
 
     def handle_fine_pointing(self, pointer_start: Point3D, pointer_end: Point3D, message: dict, msg_hand: str) -> tuple[bool, tuple[int, int]]:
+        """
+        Method to handle the fine pointing mode.
+        :param pointer_start: Point of body trackign where the pointer starts
+        :param pointer_end: Point of body tracking where the pointer ends
+        :param message: Message to be sent through websocket server
+        :param msg_hand: name of hand that is currently processed for websocket
+        :return: Updated location where user is pointing at: Bool value if pointing at screen, tuple of px-coordiantes
+        """
 
+        # Calcualte horizontal angle between reference poitn during relative pointing and current point
         h_pointer_start_screenpoint = Vector3D.from_points(
             Point3D(pointer_start.x, 0, pointer_start.z),
             Point3D(self.reference_screen_point_for_rel_pointing.x, 0, self.reference_screen_point_for_rel_pointing.z))
@@ -336,6 +412,7 @@ class InteractionController:
         h_sign = 1 if self.reference_handpos_for_rel_pointing.x < pointer_end.x else -1
         h_angle = h_pointer_start_screenpoint.get_angle(h_pointer_start_end) * h_sign
 
+        # Calcualte vertical angle between reference poitn during relative pointing and current point
         v_pointer_start_screenpoint = Vector3D.from_points(
             Point3D(0, pointer_start.y, pointer_start.z),
             Point3D(0, self.reference_screen_point_for_rel_pointing.y, self.reference_screen_point_for_rel_pointing.z)
@@ -347,10 +424,12 @@ class InteractionController:
         v_sign = -1 if self.reference_handpos_for_rel_pointing.y > pointer_end.y else 1
         v_angle = v_pointer_start_screenpoint.get_angle(v_pointer_start_end) * v_sign
 
+        # Calculate length of circle-segment that is covered relatively
         radius = pointer_start.distance(self.reference_screen_point_for_rel_pointing)
         h_segment_length = h_angle * radius
         v_segment_length = v_angle * radius
 
+        # translate length of circle segment into new pixel coordinaets
         slowdown = 0.1
         dx = int(slowdown * h_segment_length * (self.reference_screen_for_rel_pointing.px_width / self.reference_screen_for_rel_pointing.screen_width))
         dy = int(slowdown * v_segment_length * (self.reference_screen_for_rel_pointing.px_height / self.reference_screen_for_rel_pointing.screen_height))
@@ -358,16 +437,25 @@ class InteractionController:
         screen_x = self.reference_screenpos_for_rel_pointing[0] + dx
         screen_y = self.reference_screenpos_for_rel_pointing[1] + dy
 
-        message[msg_hand]["present"] = True
+        pointing_to_screen = True if (0 <= screen_x < self.screen_total_width) and (0 <= screen_y <= self.screen_total_height) else False
+
+        # Update data to be sent through websocket connection
+        message[msg_hand]["present"] = pointing_to_screen
         message[msg_hand]["fine"] = True
         message[msg_hand]["position"]["x"] = screen_x
         message[msg_hand]["position"]["y"] = screen_y
 
-        pointing_to_screen = True if (0 <= screen_x < self.screen_total_width) and (0 <= screen_y <= self.screen_total_height) else False
-
         return pointing_to_screen, (screen_x, screen_y)
 
     def handle_coarse_pointing(self, coords: tuple[int, int], prev_coords: tuple[int, int], message: dict, msg_hand: str) -> tuple[int, int]:
+        """
+        Method to handle normal (absolute) pointing.
+        :param coords: Coordinates where operator is currently pointing at
+        :param prev_coords: Coordinates where operator pointed at previously
+        :param message: Message to be sent through websocket server
+        :param msg_hand: string to identify hand in websocket message. "left" or "right"
+        :return: Updated px-coordinates ons creen where user is pointing at: Tuple of ints
+        """
 
         screen_x, screen_y = coords
         prev_screen_x, prev_screen_y = prev_coords
@@ -378,6 +466,7 @@ class InteractionController:
         if abs(screen_y - prev_screen_y) < 5:
             screen_y = prev_screen_y
 
+        # Update message for websocket server
         message[msg_hand]["present"] = True
         message[msg_hand]["fine"] = False
         message[msg_hand]["position"]["x"] = screen_x
@@ -388,15 +477,28 @@ class InteractionController:
         return coords
 
     def detect_operation_handstate(self, bodyresult: BodyResult, left_pointing: bool, right_pointing: bool, intersect_point_l: Point3D, intersect_point_r: Point3D) -> Operation:
+        """
+        Detects the operation the user is currently performing
+        :param bodyresult: Result of body tracking
+        :param left_pointing: Bool if users left hand is pointing to screen
+        :param right_pointing: Bool if users right hand is pointing to screen
+        :param intersect_point_l: 3D-point where users left hand is pointing at
+        :param intersect_point_r: 3D-point where users right hand is pointing at
+        :return: Operation that was detected
+        """
+
+        # Detect ZOOM operation
         if left_pointing and right_pointing and bodyresult.right_hand_state == HandState.CLOSED and bodyresult.left_hand_state == HandState.CLOSED:
             return Operation.ZOOM
 
+        # Detect SELECT Operation (contains legacy one-hand operation code)
         if self.interaction_mechanism == InteractionMechanism.SELECT_RIGHT_PAN_LEFT or self.interaction_mechanism == InteractionMechanism.SELECT_BOTH_PAN_BOTH:
             if right_pointing and self.detect_righthand_selection(bodyresult, intersect_point_r):
                 return Operation.SELECT_RIGHTHAND
             if bodyresult.left_hand_state == HandState.CLOSED and left_pointing:
                 return Operation.PAN_LEFTHAND
 
+        # Detect SELECT Operation (contains legacy one-hand operation code)
         if self.interaction_mechanism == InteractionMechanism.SELECT_LEFT_PAN_RIGHT or self.interaction_mechanism == InteractionMechanism.SELECT_BOTH_PAN_BOTH:
             if left_pointing and self.detect_lefthand_selection(bodyresult, intersect_point_l):
                 return Operation.SELECT_LEFTHAND
@@ -406,11 +508,18 @@ class InteractionController:
         return Operation.IDLE
 
     def detect_righthand_selection(self, bodyresult: BodyResult, intersection_point_r: Point3D) -> bool:
+        """
+        Detects right hand selection
+        :param bodyresult: Bodytracking result
+        :param intersection_point_r: Point in 3d where right hand intersects the screen
+        :return: Bool value if righthand selection was detected
+        """
 
         if bodyresult.right_hand_state == HandState.CLOSED or bodyresult.left_hand_state == HandState.CLOSED:
             return False
 
-        # Check if each hand point is closer to camera than the one before
+        # TODO: HANDLE THIS FOR multiscree setup (?)
+        # Check if each hand point in history is closer to camera than the one before
         intersection_point_r_plaine = Point3D(intersection_point_r.x, 0, intersection_point_r.z)
         for idx in range(len(self.right_hand_coords_history) - 1):
             current_plaine = Point3D(self.right_hand_coords_history[idx].x, 0, self.right_hand_coords_history[idx].z)
@@ -421,6 +530,7 @@ class InteractionController:
         oldest = self.right_hand_coords_history[0]
         latest = self.right_hand_coords_history[-1]
 
+        # keep hand at about the same height
         if abs(oldest.y - latest.y) > 30:
             return False
 
@@ -434,6 +544,12 @@ class InteractionController:
         return True
 
     def detect_lefthand_selection(self, bodyresult: BodyResult, intersection_point_l: Point3D) -> bool:
+        """
+        Detects left hand selection
+        :param bodyresult: Body tracking result
+        :param intersection_point_l: Point in 3d wehre left hand intersects the screen
+        :return: Bool value if lefthand selection was detected
+        """
 
         if bodyresult.left_hand_state == HandState.CLOSED or bodyresult.right_hand_state == HandState.CLOSED:
             return False
@@ -539,6 +655,15 @@ class InteractionController:
                 return OperationTransition.IDLE_TO_ZOOM
 
     def process_transition(self, transition: OperationTransition, x_left: int, y_left: int, x_right: int, y_right: int):
+        """
+        Properly perform transition between operations
+        :param transition: Transition to be performed
+        :param x_left: X-Coordniate on screen where user is pointing at with left hand
+        :param y_left: Y-Coordinate on screen where user is pointing at with left hand
+        :param x_right: X-Coordinate on screen wher euser is pointing at with right hand
+        :param y_right: Y-Coordinate on screen wher euser is pointing at with right hand
+        :return: None
+        """
         if transition == OperationTransition.REMAINS:
             return
         if transition == OperationTransition.SELECTLEFT_TO_SELECTRIGHT:
@@ -660,15 +785,19 @@ class InteractionController:
         pass
 
     def transition_to_panleft(self, x_left: int, y_left: int):
+        """ Transitions to pan-left operation: Emulates fingerperss on tuoch screen. """
         tc.finger_down((self.screen_total_width - x_left, y_left))
 
     def transition_from_panleft(self):
+        """ Ends Pan-Left operation: Emulates lifting finger up from touch screen. """
         tc.finger_up()
 
     def transition_to_panrigth(self, x_right: int, y_right: int):
+        """ Transitions to pan-right operation: Emulates fingerperss on tuoch screen. """
         tc.finger_down((self.screen_total_width - x_right, y_right))
 
     def transition_from_panright(self):
+        """ Ends Pan-Left operation: Emulates lifting finger up from touch screen. """
         tc.finger_up()
 
     def transition_from_zoom(self):

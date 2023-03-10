@@ -73,7 +73,7 @@ class Screen:
 
     def coords_to_px(self, point: Point3D) -> (int, int):
         """
-        Method to convert a point on screen to its pixel value
+        Method to convert a point on screen to its pixel value. Error if Point is not on screen.
         :param point: The point to convert to pixel values
         :return: Pixel values for point. Length 2 tuple, two ints. First value is x, second one is y
         """
@@ -85,6 +85,28 @@ class Screen:
         point_vector = Vector3D.from_points(self.lower_left_corner, point)
         height_px = point_vector.y_dir * (self.px_height / self.screen_height)
         width_px = Vector3D(point_vector.x_dir, 0, point_vector.z_dir).get_magnitude() * (self.px_width / self.screen_width)
+        return int(width_px), int(height_px)
+
+    def coords_to_px_space(self, point: Point3D) -> (int, int):
+        """
+        Method to convert a point on the screen plaine to pixel values.
+        Point must be on screen plaine, but  not necessarily on screen itself.
+        Returned coordinates can be out of screen bounds
+        :param point: Point to be converted to pixel values
+        :return: Pixel values for point. Length 2 tuple, two ints. First value is x, second one is y
+        """
+        if not self.screen_plain.contains_point(point, epsilon=0.0001):
+            raise ValueError("Point not in screen plaine")
+
+        # Sign doesnt transfer to ALL possible screen setups!!!!
+        if point.x < self.lower_left_corner.x:
+            multi = -1
+        else:
+            multi = 1
+
+        point_vector = Vector3D.from_points(self.lower_left_corner, point)
+        height_px = point_vector.y_dir * (self.px_height / self.screen_height)
+        width_px = Vector3D(point_vector.x_dir, 0, point_vector.z_dir).get_magnitude() * (self.px_width / self.screen_width) * multi
         return int(width_px), int(height_px)
 
 
@@ -108,18 +130,31 @@ SCREEN_SINGLE_ABOVE: tuple[Screen] = (Screen(3,
 # Multi-Screen Setup: IVE Screens
 # Small Z offset in screen 1 (z=-1) to prevent rounding issues
 SCREENS_IVE: tuple[Screen, Screen, Screen] = (
+    # left screen
     Screen(0,
            Point3D(1100, -1640, 0),
            Point3D(1209,  -360, 1890),
            1920, 1080),
+
+    # middle screen
     Screen(1,
-           Point3D(-1100, -1640, -1),
+           Point3D(-1100, -1640, -1),  # z=-1 to prevent rounding issues when checking for point within bbox
            Point3D( 1100,  -360, 0),
            1920, 1080),
+
+    # right screen
     Screen(2,
-           Point3D(-1209, -1640, 0),
+           Point3D(-1209, -1640, -1),  # z=-1 to be consistent with middle screen
            Point3D(-1100,  -360, 1890),
            1920, 1080)
+)
+
+
+SCREEN_IVE_SIMPLE: tuple[Screen] = (
+    Screen(4,
+           Point3D(-3300, -1300, -1),
+           Point3D( 3300,  -360,  0),
+           5760, 1080),
 )
 
 if __name__ == "__main__":

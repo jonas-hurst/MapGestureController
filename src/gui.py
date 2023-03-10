@@ -1,5 +1,7 @@
+import wx
+
 from guibaseExtended import GuibaseExtended, CalibrateDialogExtended
-from interaction_controller import InteractionController
+from interaction_controller import InteractionController, CameraException
 from screen import *
 from constants import *
 
@@ -15,11 +17,15 @@ class MainWindow(GuibaseExtended):
 
     def on_tgl_camera(self, event):
         btn_value = self.tgl_btn_start_camera.Value
-        if btn_value:
-            self.interaction_controller.start_camera()
-        else:
-            self.interaction_controller.stop_camera()
-        GuibaseExtended.on_tgl_camera(self, event)
+        try:
+            if btn_value:
+                self.interaction_controller.start_camera()
+            else:
+                self.interaction_controller.stop_camera()
+            GuibaseExtended.on_tgl_camera(self, event)
+        except CameraException as e:
+            # show error message if zero or more than 1 camera are connecetd to pc
+            wx.MessageDialog(self, str(e), style=wx.ICON_ERROR).ShowModal()
 
     def on_tgl_show(self, event):
         btn_value = self.tgl_btn_show_feed.Value
@@ -56,6 +62,8 @@ class MainWindow(GuibaseExtended):
             self.interaction_controller.set_screen_environment(SCREEN_SINGLE_BELOW)
         elif item == 2:
             self.interaction_controller.set_screen_environment(SCREENS_IVE)
+        elif item == 3:
+            self.interaction_controller.set_screen_environment(SCREEN_IVE_SIMPLE)
 
     def on_calibrate(self, event):
         dlg = CalibrateDialogWindow(self,

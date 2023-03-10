@@ -86,8 +86,13 @@ class Vector3D:
         :param vector: The other vector
         :return: The angle
         """
-        a = math.acos(np.dot(self.coords, vector.coords) / (self.get_magnitude() * vector.get_magnitude()))
-        return a
+        try:
+            a = math.acos(np.dot(self.coords, vector.coords) / (self.get_magnitude() * vector.get_magnitude()))
+            return a
+        except ValueError as e:
+            # catch ValueError: Math doamain error thrown by math.acos if zähler > nenner.
+            # Happens due to float rounding issues if both vectors are the same
+            return 0
 
     @staticmethod
     def check_parallel(v1: Vector3D, v2: Vector3D, epsilon: float = 0.0001) -> bool:
@@ -144,6 +149,17 @@ class Line:
                f"\tSupporting Vector: {self.support_vector.__str__()}\n" \
                f"\tDirectional Vector: {self.directional_vector.__str__()}"
 
+    def get_orthogonal_vector_to_point(self, pnt: Point3D) -> Vector3D:
+        """
+        Method to compute the vector to a point which is orthogonal to the line
+        :param pnt: Point to which to vector is computed
+        :return: The vector
+        """
+        pln = Plane3D.from_orthogonal_and_point(self.directional_vector, pnt)
+        intersect, _ = pln.intersect_line(self)
+
+        return Vector3D.from_points(pnt, intersect)
+
     @staticmethod
     def from_points(point1: Point3D, point2: Point3D) -> Line:
         """
@@ -186,11 +202,11 @@ class Plane3D:
         test_val = self.a*pnt.x + self.b*pnt.y + self.c*pnt.z
         return abs(test_val - self.d) < epsilon
 
-    def intersect_line(self, line: Line) -> Point3D:
+    def intersect_line(self, line: Line) -> tuple[Point3D, bool]:
         """
         Method to intersect the plane with a line
         :param line: The line to intersect the plane
-        :return: Point at which the intersection occurs
+        :return: Point at which the intersection occurs, bool value indicating if Point is in negative line direction
         """
         if Vector3D.check_orthogonal(Vector3D(self.a, self.b, self.c), line.directional_vector):
             raise ParallelError("Plane and Line are parallel. An intersection point is therefore not possible")
@@ -208,7 +224,7 @@ class Plane3D:
 
         r_val = numerator / denominator
         int_point = line.support_vector.coords + r_val * line.directional_vector.coords
-        return Point3D(int_point[0], int_point[1], int_point[2])
+        return Point3D(int_point[0], int_point[1], int_point[2]), r_val < 0
 
     @staticmethod
     def from_vectors(support_vector: Vector3D, dir_vector_1: Vector3D, dir_vector_2: Vector3D) -> Plane3D:
@@ -228,3 +244,15 @@ class Plane3D:
         a, b, c = normal
         d = a * support_vector.x_dir + b * support_vector.y_dir + c * support_vector.z_dir
         return Plane3D(a, b, c, d)
+
+    @staticmethod
+    def from_orthogonal_and_point(orthogonal_vector: Vector3D, pnt: Point3D) -> Plane3D:
+        """
+        Contructs a new plane which is ortnogonal to a vector and contains a point
+        :param orthogonal: The vector the plane is supposed to be orthogonal to
+        :param pnt: the point that is contained within plane
+        :return: the resutling plane
+        """
+
+        d = np.dot(orthogonal_vector.coords, pnt.coords)
+        return Plane3D(orthogonal_vector.x_dir, orthogonal_vector.y_dir, orthogonal_vector.z_dir, d)

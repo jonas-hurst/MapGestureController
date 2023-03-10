@@ -149,6 +149,14 @@ SCREENS_IVE: tuple[Screen, Screen, Screen] = (
            1920, 1080)
 )
 
+
+SCREEN_IVE_SIMPLE: tuple[Screen] = (
+    Screen(4,
+           Point3D(-3300, -1300, -1),
+           Point3D( 3300,  -360,  0),
+           5760, 1080),
+)
+
 if __name__ == "__main__":
     s = Screen(1,
                Point3D(-1.5, -1,   -0.5),

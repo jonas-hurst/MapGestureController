@@ -578,7 +578,7 @@
                                 <property name="caption"></property>
                                 <property name="caption_visible">1</property>
                                 <property name="center_pane">0</property>
-                                <property name="choices">&quot;single screen above&quot; &quot;single screen below&quot; &quot;IVE&quot;</property>
+                                <property name="choices">&quot;single screen above&quot; &quot;single screen below&quot; &quot;IVE&quot; &quot;IVE Simple&quot;</property>
                                 <property name="close_button">1</property>
                                 <property name="context_help"></property>
                                 <property name="context_menu">1</property>

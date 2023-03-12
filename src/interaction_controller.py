@@ -84,6 +84,7 @@ class InteractionController:
     def set_screen_environment(self, screens: tuple[Screen, ...]):
         """ Sets a new screen environment. """
         self.screens = screens
+        self.screen_total_height = max([screen.px_height for screen in self.screens])
         self.screen_total_width = sum([screen.px_width for screen in self.screens])
 
     def get_1euro_min_cutoff(self) -> float:

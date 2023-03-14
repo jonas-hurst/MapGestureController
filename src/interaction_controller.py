@@ -44,6 +44,8 @@ class InteractionController:
         self.left_hand_coords_history: list[Point3D] = []
         self.prev_righthand_pointing = (1, -1)
         self.right_hand_coords_history: list[Point3D] = []
+        self.left_hand_state_history: list[HandState] = []
+        self.right_hand_state_history: list[HandState] = []
 
         # Properties needed for relative fine pointing mechanism
         self.right_hand_relative_pointing: bool = False
@@ -201,6 +203,18 @@ class InteractionController:
             add_item_to_history(self.right_hand_coords_history, bodyresult.right_hand_tip, hand_coordinate_history_length)
         except AttributeError:
             add_item_to_history(self.right_hand_coords_history, Point3D(0, 0, 0), hand_coordinate_history_length)
+
+        hand_state_history_length = 7
+
+        try:
+            add_item_to_history(self.left_hand_state_history, bodyresult.left_hand_state, hand_state_history_length)
+        except AttributeError:
+            add_item_to_history(self.left_hand_state_history, HandState.UNTRACKED, hand_state_history_length)
+
+        try:
+            add_item_to_history(self.right_hand_state_history, bodyresult.right_hand_state, hand_state_history_length)
+        except AttributeError:
+            add_item_to_history(self.right_hand_state_history, HandState.UNTRACKED, hand_state_history_length)
 
     def process_bodyresult(self, bodyresult, message):
         """

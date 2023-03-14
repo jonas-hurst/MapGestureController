@@ -146,21 +146,7 @@ class InteractionController:
             self.infodata["pitch"] = round(self.__tracker_controller.pitch * (180 / math.pi), 1)
             self.infodata["roll"] = round(self.__tracker_controller.roll * (180 / math.pi), 1)
 
-            # Add Left Hand coordinates to history
-            if len(self.left_hand_coords_history) > 3:
-                self.left_hand_coords_history.pop(0)
-            try:
-                self.left_hand_coords_history.append(bodyresult.left_hand_tip)
-            except AttributeError:
-                self.left_hand_coords_history.append(Point3D(0, 0, 0))
-
-            # Add Right hand coords to history
-            if len(self.right_hand_coords_history) > 3:
-                self.right_hand_coords_history.pop(0)
-            try:
-                self.right_hand_coords_history.append(bodyresult.right_hand_tip)
-            except AttributeError:
-                self.right_hand_coords_history.append(Point3D(0, 0, 0))
+            self.fill_histories(bodyresult)
 
             if bodyresult is not None:
                 # Process results from body tracking
@@ -182,6 +168,31 @@ class InteractionController:
 
         # Close websocket server
         server.close_server()
+
+    def fill_histories(self, bodyresult: BodyResult):
+        """
+        Method to manage lists of bodyresult values from past frames
+        :param bodyresult: Result of Body Tracking
+        :return: None
+        """
+
+        hand_coordinate_history_length = 3
+
+        # Add Left Hand coordinates to history
+        if len(self.left_hand_coords_history) > hand_coordinate_history_length:
+            self.left_hand_coords_history.pop(0)
+        try:
+            self.left_hand_coords_history.append(bodyresult.left_hand_tip)
+        except AttributeError:
+            self.left_hand_coords_history.append(Point3D(0, 0, 0))
+
+        # Add Right hand coords to history
+        if len(self.right_hand_coords_history) > hand_coordinate_history_length:
+            self.right_hand_coords_history.pop(0)
+        try:
+            self.right_hand_coords_history.append(bodyresult.right_hand_tip)
+        except AttributeError:
+            self.right_hand_coords_history.append(Point3D(0, 0, 0))
 
     def process_bodyresult(self, bodyresult, message):
         """

@@ -12,25 +12,25 @@ class Screen:
         :param px_height: Height of screen in pixels
         """
 
-        # Check if lower and upper corner are actually lower and upper left/right
-        if (lower_left_corner.x > upper_right_corner.x or
-                lower_left_corner.y > upper_right_corner.y or
-                lower_left_corner.z > upper_right_corner.z):
-            raise ValueError("Lower and upper corner values are not actually lower and upper corner")
-
         self.screen_id: int = screen_id
 
-        self.lower_left_corner: Point3D = lower_left_corner
-        self.upper_right_corner: Point3D = upper_right_corner
+        self.__lower_left_corner: Point3D = lower_left_corner
 
-        self.screen_plain = Plane3D.from_vectors(self.lower_left_corner.get_pointvector(),
+        self.screen_plain = Plane3D.from_vectors(self.__lower_left_corner.get_pointvector(),
                                                  Vector3D.from_points(lower_left_corner, upper_right_corner),
                                                  Vector3D(0, -1, 0)   # Third vector just points upwards
                                                  )
 
+        self.__min_x = min((lower_left_corner.x, upper_right_corner.x))
+        self.__max_x = max((lower_left_corner.x, upper_right_corner.x))
+        self.__min_y = min((lower_left_corner.y, upper_right_corner.y))
+        self.__max_y = max((lower_left_corner.y, upper_right_corner.y))
+        self.__min_z = min((lower_left_corner.z, upper_right_corner.z))
+        self.__max_z = max((lower_left_corner.z, upper_right_corner.z))
+
         helper_vector = Vector3D.from_points(lower_left_corner, upper_right_corner)
         self.screen_width = Vector3D(helper_vector.x_dir, 0, helper_vector.z_dir).get_magnitude()
-        self.screen_height = abs(self.upper_right_corner.y - self.lower_left_corner.y)
+        self.screen_height = abs(upper_right_corner.y - lower_left_corner.y)
 
         self.px_width = px_width
         self.px_height = px_height
@@ -60,13 +60,13 @@ class Screen:
         :return: Bool value indicating if point is within bbox
         """
 
-        if not self.lower_left_corner.x <= point.x <= self.upper_right_corner.x:
+        if not self.__min_x <= point.x <= self.__max_x:
             return False
 
-        if not self.lower_left_corner.y <= point.y <= self.upper_right_corner.y:
+        if not self.__min_y <= point.y <= self.__max_y:
             return False
 
-        if not self.lower_left_corner.z <= point.z <= self.upper_right_corner.z:
+        if not self.__min_z <= point.z <= self.__max_z:
             return False
 
         return True
@@ -82,7 +82,7 @@ class Screen:
         if not self.contains_point(point):
             raise ValueError("Point not on screen")
 
-        point_vector = Vector3D.from_points(self.lower_left_corner, point)
+        point_vector = Vector3D.from_points(self.__lower_left_corner, point)
         height_px = point_vector.y_dir * (self.px_height / self.screen_height)
         width_px = Vector3D(point_vector.x_dir, 0, point_vector.z_dir).get_magnitude() * (self.px_width / self.screen_width)
         return int(width_px), int(height_px)
@@ -105,6 +105,7 @@ SCREEN_SINGLE_ABOVE: tuple[Screen] = (Screen(3,
                                              Point3D( 1100,  -100, 0),
                                              1920, 1200),)
 
+
 # Multi-Screen Setup: IVE Screens
 # Small Z offset in screen 1 (z=-1) to prevent rounding issues
 SCREENS_IVE: tuple[Screen, Screen, Screen] = (
@@ -122,8 +123,8 @@ SCREENS_IVE: tuple[Screen, Screen, Screen] = (
 
     # right screen
     Screen(2,
-           Point3D(-1209, -1640, -1),  # z=-1 to be consistent with middle screen
-           Point3D(-1100,  -360, 1890),
+           Point3D(-1209, -1640, 1890),  # z=-1 to be consistent with middle screen
+           Point3D(-1100,  -360,   -1),
            1920, 1080)
 )
 
@@ -135,11 +136,3 @@ SCREEN_IVE_SIMPLE: tuple[Screen] = (
            5760, 1080),
 )
 
-if __name__ == "__main__":
-    s = Screen(1,
-               Point3D(-1.5, -1,   -0.5),
-               Point3D( 1.5,  0.5, -0.5),
-               1920, 1080)
-    p = Point3D(-1.5, 0.5, -0.5)
-
-    print(s.coords_to_px(p))

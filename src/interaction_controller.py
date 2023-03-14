@@ -417,7 +417,7 @@ class InteractionController:
             return intersection_screen, 1920 + screen_x, screen_y, intersect_point
 
         if screen_id == 2:
-            return intersection_screen, 1920 - screen_x, screen_y, intersect_point
+            return intersection_screen, screen_x, screen_y, intersect_point
 
         if screen_id == 3:
             return intersection_screen, screen_x, screen_y, intersect_point

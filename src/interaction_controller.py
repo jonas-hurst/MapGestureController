@@ -176,23 +176,31 @@ class InteractionController:
         :return: None
         """
 
+        def add_item_to_history(history: list, item, list_max_length: int):
+            """
+            Adds an item to a history list
+            :param history: The history list to be added to
+            :param item: The item to be added to the history list
+            :return:
+            """
+            if len(history) > list_max_length:
+                history.pop(0)
+
+            history.append(item)
+
         hand_coordinate_history_length = 3
 
         # Add Left Hand coordinates to history
-        if len(self.left_hand_coords_history) > hand_coordinate_history_length:
-            self.left_hand_coords_history.pop(0)
         try:
-            self.left_hand_coords_history.append(bodyresult.left_hand_tip)
+            add_item_to_history(self.left_hand_coords_history, bodyresult.left_hand_tip, hand_coordinate_history_length)
         except AttributeError:
-            self.left_hand_coords_history.append(Point3D(0, 0, 0))
+            add_item_to_history(self.left_hand_coords_history, Point3D(0, 0, 0), hand_coordinate_history_length)
 
         # Add Right hand coords to history
-        if len(self.right_hand_coords_history) > hand_coordinate_history_length:
-            self.right_hand_coords_history.pop(0)
         try:
-            self.right_hand_coords_history.append(bodyresult.right_hand_tip)
+            add_item_to_history(self.right_hand_coords_history, bodyresult.right_hand_tip, hand_coordinate_history_length)
         except AttributeError:
-            self.right_hand_coords_history.append(Point3D(0, 0, 0))
+            add_item_to_history(self.right_hand_coords_history, Point3D(0, 0, 0), hand_coordinate_history_length)
 
     def process_bodyresult(self, bodyresult, message):
         """

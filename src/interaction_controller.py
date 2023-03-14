@@ -825,6 +825,7 @@ class InteractionController:
     def transition_from_panleft(self):
         """ Ends Pan-Left operation: Emulates lifting finger up from touch screen. """
         tc.finger_up()
+        self.last_tap = time()
 
     def transition_to_panrigth(self, x_right: int, y_right: int):
         """ Transitions to pan-right operation: Emulates fingerperss on tuoch screen. """
@@ -833,9 +834,11 @@ class InteractionController:
     def transition_from_panright(self):
         """ Ends Pan-Left operation: Emulates lifting finger up from touch screen. """
         tc.finger_up()
+        self.last_tap = time()
 
     def transition_from_zoom(self):
         tc.two_fingers_up()
+        self.last_tap = time()
 
     def transition_to_zoom(self, x_left, y_left, x_right, y_right):
         tc.two_fingers_down((self.screen_total_width - x_left, y_left), (self.screen_total_width - x_right, y_right))

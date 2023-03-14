@@ -292,7 +292,7 @@ class InteractionController:
         screen_l, hand_pointing_to_screen_l, coords_l, intersect_point_l = self.process_hand(Handednes.LEFT, bodyresult, message)
 
         if (hand_pointing_to_screen_r or self.right_hand_relative_pointing) and not hand_pointing_to_screen_l \
-                and not self.left_hand_relative_pointing and bodyresult.left_hand.y < bodyresult.nose.y:
+                and not self.left_hand_relative_pointing and bodyresult.left_hand.y < bodyresult.left_elbow.y:
             # Handle Slow (fine) pointing mode for right hand
             self.right_hand_relative_pointing = True
             if self.reference_screen_for_rel_pointing is None:
@@ -314,7 +314,7 @@ class InteractionController:
             coords_r = self.handle_coarse_pointing(coords_r, self.prev_righthand_pointing, message, "right")
 
         if (hand_pointing_to_screen_l or self.left_hand_relative_pointing) and not hand_pointing_to_screen_r \
-                and not self.right_hand_relative_pointing and bodyresult.right_hand.y < bodyresult.nose.y:
+                and not self.right_hand_relative_pointing and bodyresult.right_hand.y < bodyresult.left_elbow.y:
             # Handle Slow (fine) pointing mode for left hand
             self.left_hand_relative_pointing = True
             if self.reference_screen_for_rel_pointing is None:

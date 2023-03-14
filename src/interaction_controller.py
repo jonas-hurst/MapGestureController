@@ -7,6 +7,7 @@ from websocketserver import Server
 from constants import *
 import touchcontrol as tc
 
+from collections import Counter
 import typing
 
 class CameraException(Exception):
@@ -521,22 +522,26 @@ class InteractionController:
         :return: Operation that was detected
         """
 
+        # get majority handstate of last x frames from hand_state_history
+        right_hand_state, _ = Counter(self.right_hand_state_history).most_common()[0]
+        left_hand_state, _ = Counter(self.left_hand_state_history).most_common()[0]
+
         # Detect ZOOM operation
-        if left_pointing and right_pointing and bodyresult.right_hand_state == HandState.CLOSED and bodyresult.left_hand_state == HandState.CLOSED:
+        if left_pointing and right_pointing and right_hand_state == HandState.CLOSED and left_hand_state == HandState.CLOSED:
             return Operation.ZOOM
 
         # Detect SELECT Operation (contains legacy one-hand operation code)
         if self.interaction_mechanism == InteractionMechanism.SELECT_RIGHT_PAN_LEFT or self.interaction_mechanism == InteractionMechanism.SELECT_BOTH_PAN_BOTH:
             if right_pointing and self.detect_righthand_selection(bodyresult, intersect_point_r):
                 return Operation.SELECT_RIGHTHAND
-            if bodyresult.left_hand_state == HandState.CLOSED and left_pointing:
+            if left_hand_state == HandState.CLOSED and left_pointing:
                 return Operation.PAN_LEFTHAND
 
         # Detect SELECT Operation (contains legacy one-hand operation code)
         if self.interaction_mechanism == InteractionMechanism.SELECT_LEFT_PAN_RIGHT or self.interaction_mechanism == InteractionMechanism.SELECT_BOTH_PAN_BOTH:
             if left_pointing and self.detect_lefthand_selection(bodyresult, intersect_point_l):
                 return Operation.SELECT_LEFTHAND
-            if bodyresult.right_hand_state == HandState.CLOSED and right_pointing:
+            if right_hand_state == HandState.CLOSED and right_pointing:
                 return Operation.PAN_RIGHTHAND
 
         return Operation.IDLE

@@ -411,13 +411,13 @@ class InteractionController:
             return intersection_screen, -1, -1, intersect_point
 
         if screen_id == 0:
-            return intersection_screen, 2 * 1920 + screen_x, screen_y, intersect_point
+            return intersection_screen, screen_x, screen_y, intersect_point
 
         if screen_id == 1:
             return intersection_screen, 1920 + screen_x, screen_y, intersect_point
 
         if screen_id == 2:
-            return intersection_screen, screen_x, screen_y, intersect_point
+            return intersection_screen, 2 * 1920 + screen_x, screen_y, intersect_point
 
         if screen_id == 3:
             return intersection_screen, screen_x, screen_y, intersect_point
@@ -444,7 +444,7 @@ class InteractionController:
         h_pointer_start_end = Vector3D.from_points(
             Point3D(pointer_start.x, 0, pointer_start.z),
             Point3D(pointer_end.x, 0, pointer_end.z))
-        h_sign = 1 if self.reference_handpos_for_rel_pointing.x < pointer_end.x else -1
+        h_sign = -1 if self.reference_handpos_for_rel_pointing.x < pointer_end.x else 1
         h_angle = h_pointer_start_screenpoint.get_angle(h_pointer_start_end) * h_sign
 
         # Calcualte vertical angle between reference poitn during relative pointing and current point
@@ -825,7 +825,7 @@ class InteractionController:
 
     def transition_to_panleft(self, x_left: int, y_left: int):
         """ Transitions to pan-left operation: Emulates fingerperss on tuoch screen. """
-        tc.finger_down((self.screen_total_width - x_left, y_left))
+        tc.finger_down((x_left, y_left))
 
     def transition_from_panleft(self):
         """ Ends Pan-Left operation: Emulates lifting finger up from touch screen. """
@@ -834,7 +834,7 @@ class InteractionController:
 
     def transition_to_panrigth(self, x_right: int, y_right: int):
         """ Transitions to pan-right operation: Emulates fingerperss on tuoch screen. """
-        tc.finger_down((self.screen_total_width - x_right, y_right))
+        tc.finger_down((x_right, y_right))
 
     def transition_from_panright(self):
         """ Ends Pan-Left operation: Emulates lifting finger up from touch screen. """
@@ -846,7 +846,7 @@ class InteractionController:
         self.last_tap = time()
 
     def transition_to_zoom(self, x_left, y_left, x_right, y_right):
-        tc.two_fingers_down((self.screen_total_width - x_left, y_left), (self.screen_total_width - x_right, y_right))
+        tc.two_fingers_down((x_left, y_left), (x_right, y_right))
 
     def process_operation(self, x_left: int, y_left: int, x_right: int, y_right: int):
         if self.current_operation == Operation.SELECT_LEFTHAND:
@@ -871,7 +871,7 @@ class InteractionController:
 
         if self.pointing_mechanism == PointingMechanism.POINTER_TO_OBJECT:
             x_prev, y_prev = self.prev_lefthand_pointing
-            tc.tap((self.screen_total_width - x_prev, y_prev))
+            tc.tap((x_prev, y_prev))
 
         if self.pointing_mechanism == PointingMechanism.OBJECT_TO_POITNER:
             tc.tap((int(self.screen_total_width / 2), int(self.screen_total_height/2)))
@@ -885,7 +885,7 @@ class InteractionController:
 
         if self.pointing_mechanism == PointingMechanism.POINTER_TO_OBJECT:
             x_prev, y_prev = self.prev_righthand_pointing
-            tc.tap((self.screen_total_width - x_prev, y_prev))
+            tc.tap((x_prev, y_prev))
 
         if self.pointing_mechanism == PointingMechanism.OBJECT_TO_POITNER:
             tc.tap((int(self.screen_total_width / 2), int(self.screen_total_height/2)))
@@ -893,19 +893,19 @@ class InteractionController:
         self.last_tap = time()
 
     def pan_righthand(self, x: int, y: int):
-        tc.move_finger((self.prev_righthand_pointing[0]-x, y - self.prev_righthand_pointing[1]))
+        tc.move_finger((x-self.prev_righthand_pointing[0], y - self.prev_righthand_pointing[1]))
         self.prev_righthand_pointing = (x, y)
 
     def pan_lefthand(self, x: int, y: int):
-        tc.move_finger((self.prev_lefthand_pointing[0]-x, y-self.prev_lefthand_pointing[1]))
+        tc.move_finger((x-self.prev_lefthand_pointing[0], y-self.prev_lefthand_pointing[1]))
         self.prev_lefthand_pointing = (x, y)
 
     def zoom(self, x_left, y_left, x_right, y_right):
         if self.prev_lefthand_pointing is None:
-            self.prev_lefthand_pointing = (self.screen_total_width - x_left, y_left)
+            self.prev_lefthand_pointing = (x_left - self.screen_total_width, y_left)
         if self.prev_righthand_pointing is None:
-            self.prev_righthand_pointing = (self.screen_total_width - x_right, y_right)
-        tc.move_two_fingers((self.prev_lefthand_pointing[0]-x_left, y_left-self.prev_lefthand_pointing[1]),
-                            (self.prev_righthand_pointing[0]-x_right, y_right - self.prev_righthand_pointing[1]))
+            self.prev_righthand_pointing = (x_right - self.screen_total_width, y_right)
+        tc.move_two_fingers((x_left - self.prev_lefthand_pointing[0], y_left-self.prev_lefthand_pointing[1]),
+                            (x_right - self.prev_righthand_pointing[0], y_right - self.prev_righthand_pointing[1]))
         self.prev_lefthand_pointing = (x_left, y_left)
         self.prev_righthand_pointing = (x_right, y_right)

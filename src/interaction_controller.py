@@ -866,7 +866,7 @@ class InteractionController:
 
     def select_lefthand(self, x: int, y: int):
         t_current = time()
-        if t_current - self.last_tap < 1.5:
+        if t_current - self.last_tap < 0.5:
             return
 
         if self.pointing_mechanism == PointingMechanism.POINTER_TO_OBJECT:
@@ -880,7 +880,7 @@ class InteractionController:
 
     def select_righthand(self, x: int, y: int):
         t_current = time()
-        if t_current - self.last_tap < 1.5:
+        if t_current - self.last_tap < 0.5:
             return
 
         if self.pointing_mechanism == PointingMechanism.POINTER_TO_OBJECT:

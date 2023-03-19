@@ -895,10 +895,12 @@ class InteractionController:
     def pan_righthand(self, x: int, y: int):
         tc.move_finger((x-self.prev_righthand_pointing[0], y - self.prev_righthand_pointing[1]))
         self.prev_righthand_pointing = (x, y)
+        self.last_tap = time()
 
     def pan_lefthand(self, x: int, y: int):
         tc.move_finger((x-self.prev_lefthand_pointing[0], y-self.prev_lefthand_pointing[1]))
         self.prev_lefthand_pointing = (x, y)
+        self.last_tap = time()
 
     def zoom(self, x_left, y_left, x_right, y_right):
         if self.prev_lefthand_pointing is None:
@@ -909,3 +911,4 @@ class InteractionController:
                             (x_right - self.prev_righthand_pointing[0], y_right - self.prev_righthand_pointing[1]))
         self.prev_lefthand_pointing = (x_left, y_left)
         self.prev_righthand_pointing = (x_right, y_right)
+        self.last_tap = time()

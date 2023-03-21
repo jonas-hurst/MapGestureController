@@ -554,33 +554,14 @@ class InteractionController:
         :return: Bool value if righthand selection was detected
         """
 
-        if bodyresult.right_hand_state == HandState.CLOSED or bodyresult.left_hand_state == HandState.CLOSED:
-            return False
-
-        # TODO: HANDLE THIS FOR multiscree setup (?)
-        # Check if each hand point in history is closer to camera than the one before
         intersection_point_r_plaine = Point3D(intersection_point_r.x, 0, intersection_point_r.z)
-        for idx in range(len(self.right_hand_coords_history) - 1):
-            current_plaine = Point3D(self.right_hand_coords_history[idx].x, 0, self.right_hand_coords_history[idx].z)
-            next_plaine = Point3D(self.right_hand_coords_history[idx+1].x, 0, self.right_hand_coords_history[idx+1].z)
-            if current_plaine.distance(intersection_point_r_plaine) <= next_plaine.distance(intersection_point_r_plaine):
-                return False
+        selection_detected = self.detect_selection_general(Handednes.RIGHT, bodyresult, intersection_point_r_plaine)
 
-        oldest = self.right_hand_coords_history[0]
-        latest = self.right_hand_coords_history[-1]
+        if selection_detected:
+            self.right_hand_coords_history.pop()
+            self.right_hand_coords_history.append(Point3D(0, 0, 0))
 
-        # keep hand at about the same height
-        if abs(oldest.y - latest.y) > 30:
-            return False
-
-        # Last hand position must be closer to camera than the onx x frames ago.
-        # Msut exceed threshold
-        if Point3D(latest.x, 0, latest.z).distance(Point3D(oldest.x, 0, oldest.z)) < 40:
-            return False
-
-        self.right_hand_coords_history.pop()
-        self.right_hand_coords_history.append(Point3D(0, 0, 0))
-        return True
+        return selection_detected
 
     def detect_lefthand_selection(self, bodyresult: BodyResult, intersection_point_l: Point3D) -> bool:
         """
@@ -590,27 +571,51 @@ class InteractionController:
         :return: Bool value if lefthand selection was detected
         """
 
-        if bodyresult.left_hand_state == HandState.CLOSED or bodyresult.right_hand_state == HandState.CLOSED:
+        intersection_point_l_plaine = Point3D(intersection_point_l.x, 0, intersection_point_l.z)
+        selection_detected = self.detect_selection_general(Handednes.LEFT, bodyresult, intersection_point_l_plaine)
+
+        if selection_detected:
+            self.left_hand_coords_history.pop()
+            self.left_hand_coords_history.append(Point3D(0, 0, 0))
+
+        return selection_detected
+
+    def detect_selection_general(self, hand: Handednes, bodyresult: BodyResult, intersection_point_plaine: Point3D) -> bool:
+        """
+        Detects if a hand is performing a selectino gesture
+        :param hand: Hand for which to detect selection gesture
+        :param bodyresult: Body tracking result
+        :param intersection_point_plaine: Point where screen intersection occured, in XZ-Plaine
+        :return: Bool value whether selection gesture was detected
+        """
+
+        # select appropriate coordinate history based on hand that is being processed
+        coord_history = self.right_hand_coords_history if hand == Handednes.RIGHT else self.left_hand_coords_history
+
+        # False if either hand is closed
+        if bodyresult.right_hand_state == HandState.CLOSED or bodyresult.left_hand_state == HandState.CLOSED:
             return False
 
-        intersection_point_l_plaine = Point3D(intersection_point_l.x, 0, intersection_point_l.z)
-        for idx in range(len(self.left_hand_coords_history) - 1):
-            current_plaine = Point3D(self.left_hand_coords_history[idx].x, 0, self.left_hand_coords_history[idx].z)
-            next_plaine = Point3D(self.left_hand_coords_history[idx+1].x, 0, self.left_hand_coords_history[idx+1].z)
-            if current_plaine.distance(intersection_point_l_plaine) <= next_plaine.distance(intersection_point_l_plaine):
+        # TODO: HANDLE THIS FOR multiscree setup (?)
+        # Check if each hand point in history is closer to camera than the one before
+        for idx in range(len(coord_history) - 1):
+            current_plaine = Point3D(coord_history[idx].x, 0, coord_history[idx].z)
+            next_plaine = Point3D(coord_history[idx+1].x, 0, coord_history[idx+1].z)
+            if current_plaine.distance(intersection_point_plaine) <= next_plaine.distance(intersection_point_plaine):
                 return False
 
-        oldest = self.left_hand_coords_history[0]
-        latest = self.left_hand_coords_history[-1]
+        oldest = coord_history[0]
+        latest = coord_history[-1]
 
+        # keep hand at about the same height
         if abs(oldest.y - latest.y) > 30:
             return False
 
+        # Last hand position must be closer to camera than the one x frames ago.
+        # Msut exceed threshold
         if Point3D(latest.x, 0, latest.z).distance(Point3D(oldest.x, 0, oldest.z)) < 40:
             return False
 
-        self.left_hand_coords_history.pop()
-        self.left_hand_coords_history.append(Point3D(0, 0, 0))
         return True
 
     def get_operation_transition(self) -> OperationTransition:

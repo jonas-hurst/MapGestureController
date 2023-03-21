@@ -596,7 +596,6 @@ class InteractionController:
         if bodyresult.right_hand_state == HandState.CLOSED or bodyresult.left_hand_state == HandState.CLOSED:
             return False
 
-        # TODO: HANDLE THIS FOR multiscree setup (?)
         # Check if each hand point in history is closer to camera than the one before
         # Check if hand moves at about the same height (y-value remains about the same)
         for idx in range(len(coord_history) - 1):

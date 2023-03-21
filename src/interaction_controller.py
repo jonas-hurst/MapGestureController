@@ -598,18 +598,19 @@ class InteractionController:
 
         # TODO: HANDLE THIS FOR multiscree setup (?)
         # Check if each hand point in history is closer to camera than the one before
+        # Check if hand moves at about the same height (y-value remains about the same)
         for idx in range(len(coord_history) - 1):
             current_plaine = Point3D(coord_history[idx].x, 0, coord_history[idx].z)
             next_plaine = Point3D(coord_history[idx+1].x, 0, coord_history[idx+1].z)
+
             if current_plaine.distance(intersection_point_plaine) <= next_plaine.distance(intersection_point_plaine):
+                return False
+
+            if abs(coord_history[idx].y - coord_history[idx+1].y) > 30:
                 return False
 
         oldest = coord_history[0]
         latest = coord_history[-1]
-
-        # keep hand at about the same height
-        if abs(oldest.y - latest.y) > 30:
-            return False
 
         # Last hand position must be closer to camera than the one x frames ago.
         # Msut exceed threshold

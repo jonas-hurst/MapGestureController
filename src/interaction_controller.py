@@ -606,7 +606,10 @@ class InteractionController:
             if current_plaine.distance(intersection_point_plaine) <= next_plaine.distance(intersection_point_plaine):
                 return False
 
-            if abs(coord_history[idx].y - coord_history[idx+1].y) > 30:
+            if abs(coord_history[idx].y - coord_history[idx+1].y) > 20:
+                return False
+
+            if Line.from_points(current_plaine, intersection_point_plaine).get_orthogonal_vector_to_point(next_plaine).get_magnitude() > 20:
                 return False
 
         oldest = coord_history[0]

@@ -57,9 +57,9 @@ class MainWindow(GuibaseExtended):
     def on_screen_changed(self, event):
         item = self.screen_choice.GetSelection()
         if item == 0:
-            self.interaction_controller.set_screen_environment(SCREEN_SINGLE_ABOVE)
+            self.interaction_controller.set_screen_environment(SCREEN_SINGLE_ABOVE_1080p)
         elif item == 1:
-            self.interaction_controller.set_screen_environment(SCREEN_SINGLE_BELOW)
+            self.interaction_controller.set_screen_environment(SCREEN_SINGLE_ABOVE_1200p)
         elif item == 2:
             self.interaction_controller.set_screen_environment(SCREENS_IVE)
         elif item == 3:

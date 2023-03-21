@@ -23,7 +23,7 @@ class InteractionController:
 
         self.infodata = infodata
 
-        self.screens = SCREEN_SINGLE_ABOVE
+        self.screens = SCREEN_SINGLE_ABOVE_1080p
 
         self.screen_total_height = max([screen.px_height for screen in self.screens])
         self.screen_total_width = sum([screen.px_width for screen in self.screens])

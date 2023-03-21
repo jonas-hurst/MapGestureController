@@ -62,7 +62,7 @@ class Guibase ( wx.Frame ):
 		self.selection_mechanism_choice.SetSelection( 0 )
 		bSizer1.Add( self.selection_mechanism_choice, 0, wx.ALL|wx.EXPAND, 5 )
 
-		screen_choiceChoices = [ u"single screen above", u"single screen below", u"IVE", u"IVE Simple" ]
+		screen_choiceChoices = [ u"single screen above 1080p", u"single screen above 1200p", u"IVE", u"IVE Simple" ]
 		self.screen_choice = wx.Choice( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, screen_choiceChoices, 0 )
 		self.screen_choice.SetSelection( 0 )
 		bSizer1.Add( self.screen_choice, 0, wx.ALL|wx.EXPAND, 5 )

@@ -187,26 +187,42 @@ class TrackerController:
         if self.visualize:
             self.visualizeImage(color_image_rgb)
 
-        if self.__body_frame.get_num_bodies() > 0:
+        # get number of detected bodies in frame
+        num_bodies = self.__body_frame.get_num_bodies()
 
-            # on first body detected: initialize filters
-            if not self.__filters_initialized:
-                self.initialize_filters(self.__body_frame.get_body(0), capture_time)
-                self.__filters_initialized = True
-                return None
-
-            body: pykinect.Body = self.__body_frame.get_body(0)
-
-            # Filter coordinates
-            self.filter_body_coordinates(body, capture_time)
-
-            # Rotate coordinates to correct for camera pitch
-            self.correct_roll_pitch(body)
-
-            result = BodyResult(body, self.__leftHand.handstate, self.__rightHand.handstate)
-            return result
-        else:
+        # End procesing when no bodies are detected
+        if num_bodies < 1:
+            self.__filters_initialized = False
             return None
+
+        # Identify the body closest to camera and use only it for further processing
+        closest_body_idx = None
+        closest_body_distance = float("inf")
+        for body_idx in range(num_bodies):
+            x = self.__body_frame.get_body(body_idx).joints[pykinect.K4ABT_JOINT_SPINE_CHEST].position.z
+            y = self.__body_frame.get_body(body_idx).joints[pykinect.K4ABT_JOINT_SPINE_CHEST].position.y
+            z = self.__body_frame.get_body(body_idx).joints[pykinect.K4ABT_JOINT_SPINE_CHEST].position.z
+            sq_dist_camera = x*x - y*y - z*z
+            if sq_dist_camera < closest_body_distance:
+                closest_body_idx = body_idx
+                closest_body_distance = sq_dist_camera
+
+        body = self.__body_frame.get_body(closest_body_idx)
+
+        # on first frame where body is detected: initialize filters
+        if not self.__filters_initialized:
+            self.initialize_filters(body, capture_time)
+            self.__filters_initialized = True
+            return None
+
+        # Filter coordinates
+        self.filter_body_coordinates(body, capture_time)
+
+        # Rotate coordinates to correct for camera pitch
+        self.correct_roll_pitch(body)
+
+        result = BodyResult(body, self.__leftHand.handstate, self.__rightHand.handstate)
+        return result
 
     def calc_roll_pitch(self, imu_sample: pykinect.ImuSample):
         """

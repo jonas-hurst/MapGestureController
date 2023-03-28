@@ -368,8 +368,6 @@ class Spehre3D:
             - 2 * (self.center.get_pointvector().get_dotproduct(line.support_vector)) - \
             self.radius*self.radius
 
-        print(a, b, c)
-
         underroot = b*b - 4*a*c
 
         if underroot < 0:
@@ -388,4 +386,4 @@ class Spehre3D:
         pnt2 = line.get_point_on_line(r2)
         result.append(pnt2)
 
-        print(tuple(result))
+        return tuple(result)

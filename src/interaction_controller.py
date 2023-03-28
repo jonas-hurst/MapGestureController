@@ -304,7 +304,7 @@ class InteractionController:
                 self.reference_screenpos_for_rel_pointing = coords_r
             if self.reference_screen_point_for_rel_pointing is None:
                 self.reference_screen_point_for_rel_pointing = intersect_point_r
-            hand_pointing_to_screen_r, coords_r = self.handle_fine_pointing(bodyresult.pointer_start, bodyresult.pointer_end_right, message, "right")
+            hand_pointing_to_screen_r, coords_r, intersect_point_r = self.handle_fine_pointing(bodyresult.pointer_start, bodyresult.pointer_end_right, message, "right")
         elif hand_pointing_to_screen_r:
             # Handle normal pointing mode for right hand
             self.right_hand_relative_pointing = False
@@ -327,7 +327,7 @@ class InteractionController:
                 self.reference_screenpos_for_rel_pointing = coords_l
             if self.reference_screen_point_for_rel_pointing is None:
                 self.reference_screen_point_for_rel_pointing = intersect_point_l
-            hand_pointing_to_screen_l, coords_l = self.handle_fine_pointing(bodyresult.pointer_start, bodyresult.pointer_end_left, message, "left")
+            hand_pointing_to_screen_l, coords_l, intersect_point_l = self.handle_fine_pointing(bodyresult.pointer_start, bodyresult.pointer_end_left, message, "left")
         elif hand_pointing_to_screen_l:
             # Handle normal pointing mode for left hand
             self.left_hand_relative_pointing = False
@@ -429,7 +429,7 @@ class InteractionController:
 
         return intersection_screen, -1, -1, intersect_point
 
-    def handle_fine_pointing(self, pointer_start: Point3D, pointer_end: Point3D, message: dict, msg_hand: str) -> tuple[bool, tuple[int, int]]:
+    def handle_fine_pointing(self, pointer_start: Point3D, pointer_end: Point3D, message: dict, msg_hand: str) -> tuple[bool, tuple[int, int], Point3D]:
         """
         Method to handle the fine pointing mode.
         :param pointer_start: Point of body trackign where the pointer starts
@@ -476,13 +476,27 @@ class InteractionController:
 
         pointing_to_screen = True if (0 <= screen_x < self.screen_total_width) and (0 <= screen_y <= self.screen_total_height) else False
 
+        intersect_point = Point3D(-1, -1, -1)
+        if pointing_to_screen:
+            # Calculate point of pseudo-screen intersection
+            # Calculates point on the sphere from before to prevent inifinitely large numbers from occuring
+            sphere = Spehre3D(pointer_start, radius)
+            line = Line(pointer_start.get_pointvector(), Vector3D.from_points(pointer_start, pointer_end))
+            int_points = sphere.intersect_line(line)
+
+            for int_point in int_points:
+                if not line.check_point_scale_positive_direction(int_point):
+                    continue
+                intersect_point = int_point
+                break
+
         # Update data to be sent through websocket connection
         message[msg_hand]["present"] = pointing_to_screen
         message[msg_hand]["fine"] = True
         message[msg_hand]["position"]["x"] = screen_x
         message[msg_hand]["position"]["y"] = screen_y
 
-        return pointing_to_screen, (screen_x, screen_y)
+        return pointing_to_screen, (screen_x, screen_y), intersect_point
 
     def handle_coarse_pointing(self, coords: tuple[int, int], prev_coords: tuple[int, int], message: dict, msg_hand: str) -> tuple[int, int]:
         """

@@ -50,6 +50,15 @@ class Point3D:
         """
         return np.linalg.norm(self.coords - point.coords)
 
+    @staticmethod
+    def from_pointvector(vector: Vector3D) -> Point3D:
+        """
+        Creates a Point from its point vector (Vector from origin to point)
+        :param vector: the point vector
+        :return: the point
+        """
+        return Point3D(vector.x_dir, vector.y_dir, vector.z_dir)
+
 
 class Vector3D:
     """

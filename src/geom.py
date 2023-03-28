@@ -346,3 +346,46 @@ class Plane3D:
 
         d = np.dot(orthogonal_vector.coords, pnt.coords)
         return Plane3D(orthogonal_vector.x_dir, orthogonal_vector.y_dir, orthogonal_vector.z_dir, d)
+
+
+class Spehre3D:
+    def __init__(self, center: Point3D, radius: Real):
+        self.center: Point3D = center
+        self.radius: Real = radius
+
+    def intersect_line(self, line: Line) -> tuple[Point3D, ...]:
+        # Intersecting a shpere and a line ultimately leads to solving a quadratic equation
+
+        a = line.directional_vector.get_dotproduct(line.directional_vector)
+
+        b = 2 * (
+            line.support_vector.get_dotproduct(line.directional_vector)
+            - 1 * (self.center.get_pointvector().get_dotproduct(line.directional_vector))
+        )
+
+        c = self.center.get_pointvector().get_dotproduct(self.center.get_pointvector()) + \
+            line.support_vector.get_dotproduct(line.support_vector)\
+            - 2 * (self.center.get_pointvector().get_dotproduct(line.support_vector)) - \
+            self.radius*self.radius
+
+        print(a, b, c)
+
+        underroot = b*b - 4*a*c
+
+        if underroot < 0:
+            # no intersection possible
+            return ()
+
+        result = []
+
+        if underroot > 0:
+            # two intersections possible
+            r1 = (-b - math.sqrt(underroot)) / (2 * a)
+            pnt1 = line.get_point_on_line(r1)
+            result.append(pnt1)
+
+        r2 = (-b + math.sqrt(underroot)) / (2*a)
+        pnt2 = line.get_point_on_line(r2)
+        result.append(pnt2)
+
+        print(tuple(result))

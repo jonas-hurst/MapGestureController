@@ -70,6 +70,15 @@ class Vector3D:
         self.y_dir = self.coords[1]
         self.z_dir = self.coords[2]
 
+    def __add__(self, other: Vector3D) -> Vector3D:
+        """
+        Adds two vectors
+        :param other: the other vector
+        :return: added Vectors
+        """
+        vector_sum = self.coords + other.coords
+        return Vector3D(vector_sum[0], vector_sum[1], vector_sum[2])
+
     def __sub__(self, other: Vector3D) -> Vector3D:
         """
         Calculates the difference between vectors self and other
@@ -81,6 +90,15 @@ class Vector3D:
 
     def __str__(self):
         return "Vector3D: " + self.coords.__str__()
+
+    def scale(self, factor: Real) -> Vector3D:
+        """
+        Scales a vector evenly in x-, y- and z-direction by a factor
+        :param factor: the scaling factor
+        :return: the scaled vector
+        """
+        scaled = self.coords * factor
+        return Vector3D(scaled[0], scaled[1], scaled[2])
 
     def get_magnitude(self) -> float:
         """
@@ -102,6 +120,9 @@ class Vector3D:
             # catch ValueError: Math doamain error thrown by math.acos if zähler > nenner.
             # Happens due to float rounding issues if both vectors are the same
             return 0
+
+    def get_dotproduct(self, vector: Vector3D) -> float:
+        return float(np.dot(self.coords, vector.coords))
 
     @staticmethod
     def check_parallel(v1: Vector3D, v2: Vector3D, epsilon: float = 0.0001) -> bool:
@@ -157,6 +178,66 @@ class Line:
         return f"Line:\n" \
                f"\tSupporting Vector: {self.support_vector.__str__()}\n" \
                f"\tDirectional Vector: {self.directional_vector.__str__()}"
+
+    def get_point_on_line(self, r: Real) -> Point3D:
+        """
+        Calculates a point on the line: support vector + r * directional_vector
+        :param r: factor r
+        :return: Point on the line
+        """
+
+        coords = self.support_vector + self.directional_vector.scale(r)
+        return Point3D.from_pointvector(coords)
+
+    def check_point_on_line(self, pnt: Point3D, epsilon: Real = 0.0001) -> bool:
+        """
+        Performs a check whether a point is on the line
+        :param pnt: the Point to perform the check with
+        :param epsilon: tolerance value to consider a point on the line to prevent issues in float rounding
+        :return: bool value if it is on the line
+        """
+        v_pnt = pnt.get_pointvector()
+
+        r1 = (v_pnt.x_dir - self.support_vector.x_dir) / self.directional_vector.x_dir
+        r2 = (v_pnt.y_dir - self.support_vector.y_dir) / self.directional_vector.y_dir
+        r3 = (v_pnt.z_dir - self.support_vector.z_dir) / self.directional_vector.z_dir
+
+        diff1 = abs(r1 - r2)
+        diff2 = abs(r2 - r3)
+        diff3 = abs(r1 - r3)
+
+        return diff1 < epsilon and diff2 < epsilon and diff3 < epsilon
+
+    def get_scale_value(self, pnt: Point3D, epsilon: float = 0.0001) -> float:
+        """
+        Calculates how many times directional vector must be scaled to reach a point on the line.
+        :param pnt: Point to be reached, must be on the line
+        :param epsilon: parameter to account for float rounding issues when performing checks
+        :return: scale value
+        """
+        if not self.check_point_on_line(pnt, epsilon=epsilon):
+            raise ValueError("Point is not situated on line")
+
+        v_pnt = pnt.get_pointvector()
+
+        scale = (v_pnt.x_dir - self.support_vector.x_dir) / self.directional_vector.x_dir
+
+        return scale
+
+    def check_point_scale_positive_direction(self, pnt: Point3D, epsilon: float = 0.0001) -> bool:
+        """
+        Checks if directional vector must be scaled with a positive value to reach the point
+        :param pnt: Point to be checked, must be on the line
+        :param epsilon: parameter to account for float rounding issues when performing checks
+        :return: bool value indicating if directional vector must be scaled positively or negatively
+        """
+        r = self.get_scale_value(pnt, epsilon=epsilon)
+
+        if abs(r) < epsilon:
+            raise ValueError("Scale factor is (near) zero, therefore no statement can be made regarding its direction."
+                             "Use lower epsilon value if you think this is an error.")
+
+        return r > 0
 
     def get_orthogonal_vector_to_point(self, pnt: Point3D) -> Vector3D:
         """

@@ -612,28 +612,33 @@ class InteractionController:
         if bodyresult.right_hand_state == HandState.CLOSED or bodyresult.left_hand_state == HandState.CLOSED:
             return False
 
-        # Check if each hand point in history is closer to camera than the one before
-        # Check if hand moves at about the same height (y-value remains about the same)
+        # distance which the hand must move per frame to detect a select gesture
+        distance_per_frame = 50 / len(coord_history)
+
+        # Analyze coordinate history to detect selection motion
+        start_plaine = Point3D(coord_history[0].x, 0, coord_history[0].z)
         for idx in range(len(coord_history) - 1):
             current_plaine = Point3D(coord_history[idx].x, 0, coord_history[idx].z)
             next_plaine = Point3D(coord_history[idx+1].x, 0, coord_history[idx+1].z)
 
-            if current_plaine.distance(intersection_point_plaine) <= next_plaine.distance(intersection_point_plaine):
+            current_screen_dist = current_plaine.distance(intersection_point_plaine)
+            next_screen_dist = next_plaine.distance(intersection_point_plaine)
+
+            # hand must have moved closer towards screen
+            if current_screen_dist <= next_screen_dist:
                 return False
 
-            if abs(coord_history[idx].y - coord_history[idx+1].y) > 20:
+            # hand must have moved at least x millimeters between frames
+            if abs(current_screen_dist - next_screen_dist) < distance_per_frame:
                 return False
 
-            if Line.from_points(current_plaine, intersection_point_plaine).get_orthogonal_vector_to_point(next_plaine).get_magnitude() > 20:
+            # hand must remain at about the same height
+            if abs(coord_history[0].y - coord_history[idx+1].y) > 20:
                 return False
 
-        oldest = coord_history[0]
-        latest = coord_history[-1]
-
-        # Last hand position must be closer to camera than the one x frames ago.
-        # Msut exceed threshold
-        if Point3D(latest.x, 0, latest.z).distance(Point3D(oldest.x, 0, oldest.z)) < 40:
-            return False
+            # hand must follow about the same line
+            if Line.from_points(start_plaine, intersection_point_plaine).get_orthogonal_vector_to_point(next_plaine).get_magnitude() > 20:
+                return False
 
         return True
 

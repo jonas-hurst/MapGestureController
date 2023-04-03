@@ -542,7 +542,6 @@ class InteractionController:
         for screen in self.screens:
             screen.move_realtive_z(anchor_z)
 
-
     def detect_operation_handstate(self, bodyresult: BodyResult, left_pointing: bool, right_pointing: bool, intersect_point_l: Point3D, intersect_point_r: Point3D) -> Operation:
         """
         Detects the operation the user is currently performing

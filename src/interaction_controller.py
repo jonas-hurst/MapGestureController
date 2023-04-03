@@ -45,6 +45,7 @@ class InteractionController:
         self.left_hand_coords_history: list[Point3D] = []
         self.prev_righthand_pointing = (1, -1)
         self.right_hand_coords_history: list[Point3D] = []
+        self.chest_coordinate_history: list[Point3D] = []
         self.left_hand_state_history: list[HandState] = []
         self.right_hand_state_history: list[HandState] = []
 
@@ -204,6 +205,12 @@ class InteractionController:
             add_item_to_history(self.right_hand_coords_history, bodyresult.right_hand_tip, hand_coordinate_history_length)
         except AttributeError:
             add_item_to_history(self.right_hand_coords_history, Point3D(0, 0, 0), hand_coordinate_history_length)
+
+        # Add chest coords to history
+        try:
+            add_item_to_history(self.chest_coordinate_history, bodyresult.chest, hand_coordinate_history_length)
+        except AttributeError:
+            add_item_to_history(self.chest_coordinate_history, Point3D(0, 0, 0), hand_coordinate_history_length)
 
         hand_state_history_length = 7
 
@@ -636,8 +643,19 @@ class InteractionController:
             current_plaine = Point3D(coord_history[idx].x, 0, coord_history[idx].z)
             next_plaine = Point3D(coord_history[idx+1].x, 0, coord_history[idx+1].z)
 
+            current_chest_plaine = Point3D(self.chest_coordinate_history[idx].x, 0, self.chest_coordinate_history[idx].z)
+            next_chest_plaine = Point3D(self.chest_coordinate_history[idx+1].x, 0, self.chest_coordinate_history[idx+1].z)
+
             current_screen_dist = current_plaine.distance(intersection_point_plaine)
             next_screen_dist = next_plaine.distance(intersection_point_plaine)
+
+            current_chest_screen_dist = current_chest_plaine.distance(intersection_point_plaine)
+            next_chest_screen_dist = next_chest_plaine.distance(intersection_point_plaine)
+
+            # chest must not have moved towards the screen too much
+            # Prevents triggering a selection due to walking
+            if abs(current_chest_screen_dist - next_chest_screen_dist) > 10:
+                return False
 
             # hand must have moved closer towards screen
             if current_screen_dist <= next_screen_dist:

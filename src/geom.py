@@ -87,9 +87,30 @@ class Vector3D:
     """
     def __init__(self, x_dir: Real, y_dir: Real, z_dir: Real):
         self.coords: np.array = np.array([x_dir, y_dir, z_dir])
-        self.x_dir = self.coords[0]
-        self.y_dir = self.coords[1]
-        self.z_dir = self.coords[2]
+
+    @property
+    def x_dir(self):
+        return self.coords[0]
+
+    @x_dir.setter
+    def x_dir(self, value):
+        self.coords[0] = value
+
+    @property
+    def y_dir(self):
+        return self.coords[1]
+
+    @y_dir.setter
+    def y_dir(self, value):
+        self.coords[1] = value
+
+    @property
+    def z_dir(self):
+        return self.coords[2]
+
+    @z_dir.setter
+    def z_dir(self, value):
+        self.coords[2] = value
 
     def __add__(self, other: Vector3D) -> Vector3D:
         """

@@ -57,12 +57,14 @@ class MainWindow(GuibaseExtended):
     def on_screen_changed(self, event):
         item = self.screen_choice.GetSelection()
         if item == 0:
-            self.interaction_controller.set_screen_environment(SCREEN_SINGLE_ABOVE_1080p)
+            self.interaction_controller.set_screen_environment(SCREEN_SINGLE_ABOVE_FHD)
         elif item == 1:
-            self.interaction_controller.set_screen_environment(SCREEN_SINGLE_ABOVE_1200p)
+            self.interaction_controller.set_screen_environment(SCREEN_SINGLE_ABOVE_UHD)
         elif item == 2:
-            self.interaction_controller.set_screen_environment(SCREENS_IVE)
+            self.interaction_controller.set_screen_environment(SCREEN_SINGLE_ABOVE_1200p)
         elif item == 3:
+            self.interaction_controller.set_screen_environment(SCREENS_IVE)
+        elif item == 4:
             self.interaction_controller.set_screen_environment(SCREEN_IVE_SIMPLE)
 
     def on_calibrate(self, event):

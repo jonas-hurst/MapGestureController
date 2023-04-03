@@ -27,12 +27,33 @@ class Point3D:
         :param z: Z-coordinate of point
         """
         self.coords: np.array = np.array([x, y, z])
-        self.x = self.coords[0]
-        self.y = self.coords[1]
-        self.z = self.coords[2]
 
     def __str__(self):
         return "Point3D: " + self.coords.__str__()
+
+    @property
+    def x(self):
+        return self.coords[0]
+
+    @x.setter
+    def x(self, value: Real):
+        self.coords[0] = value
+
+    @property
+    def y(self):
+        return self.coords[1]
+
+    @y.setter
+    def y(self, value: Real):
+        self.coords[1] = value
+
+    @property
+    def z(self):
+        return self.coords[2]
+
+    @z.setter
+    def z(self, value: Real):
+        self.coords[2] = value
 
     def get_pointvector(self) -> Vector3D:
         """

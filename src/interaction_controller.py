@@ -253,6 +253,10 @@ class InteractionController:
             return
 
         # After here only if if hand points to screen is on screen
+
+        # Adjust screen position to body position
+        # self.move_screens(bodyresult)
+
         self.previous_operation = self.current_operation
         self.current_operation = self.detect_operation_handstate(
             bodyresult,
@@ -383,6 +387,7 @@ class InteractionController:
         intersection_screen = Screen(-1,
                                      Point3D(-1, -1, -1),
                                      Point3D(1, 1, 1),
+                                     Point3D(0, 0, 0),
                                      1, 1)
 
         for screen in self.screens:
@@ -526,6 +531,17 @@ class InteractionController:
         coords = (screen_x, screen_y)
 
         return coords
+
+    def move_screens(self, bodyresult: BodyResult):
+
+        body_z = bodyresult.chest.z
+        distance_screen_body = 1300
+
+        anchor_z = body_z - distance_screen_body
+
+        for screen in self.screens:
+            screen.move_realtive_z(anchor_z)
+
 
     def detect_operation_handstate(self, bodyresult: BodyResult, left_pointing: bool, right_pointing: bool, intersect_point_l: Point3D, intersect_point_r: Point3D) -> Operation:
         """

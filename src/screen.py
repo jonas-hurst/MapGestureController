@@ -142,10 +142,10 @@ SCREEN_SINGLE_ABOVE_FHD: tuple[Screen] = (Screen(3,
 # Single UHD Screen setup: One screen above the camera
 # Small Z offset of -1 to prevent rounding issues
 SCREEN_SINGLE_ABOVE_UHD: tuple[Screen] = (Screen(3,
-                                                  Point3D( 1100, -1380, -1),
-                                                  Point3D(-1100,  -100,  0),
-                                                  Point3D(0, 0, 0),
-                                                  3840, 2160),)
+                                                 Point3D( 1100, -1380, -1),
+                                                 Point3D(-1100,  -100,  0),
+                                                 Point3D(0, 0, 0),
+                                                 3840, 2160),)
 
 
 # Multi-Screen Setup: IVE Screens

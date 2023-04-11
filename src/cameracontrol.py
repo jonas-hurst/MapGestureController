@@ -198,19 +198,12 @@ class TrackerController:
             self.__filters_initialized = False
             return None
 
-        # Identify the body closest to camera and use only it for further processing
-        closest_body_idx = None
-        closest_body_distance = float("inf")
-        for body_idx in range(num_bodies):
-            x = self.__body_frame.get_body(body_idx).joints[pykinect.K4ABT_JOINT_SPINE_CHEST].position.z
-            y = self.__body_frame.get_body(body_idx).joints[pykinect.K4ABT_JOINT_SPINE_CHEST].position.y
-            z = self.__body_frame.get_body(body_idx).joints[pykinect.K4ABT_JOINT_SPINE_CHEST].position.z
-            sq_dist_camera = x*x - y*y - z*z
-            if sq_dist_camera < closest_body_distance:
-                closest_body_idx = body_idx
-                closest_body_distance = sq_dist_camera
+        # ----- code below only executes if bodies were detected
 
-        body = self.__body_frame.get_body(closest_body_idx)
+        if num_bodies < 2:
+            body = self.__body_frame.get_body(0)
+        else:
+            body: pykinect.Body = self.get_closest_body(num_bodies)
 
         # on first frame where body is detected: initialize filters
         if not self.__filters_initialized:
@@ -241,6 +234,28 @@ class TrackerController:
         acc_z = acc_sample[2]
         self.pitch = math.asin(acc_x / math.sqrt(sum(i ** 2 for i in acc_sample)))
         self.roll = math.atan(acc_y / acc_z)
+
+    def get_closest_body(self, number_bodies: int) -> pykinect.Body:
+        """
+        Identify and return closest body in Image
+        :param number_bodies: number of bodies that were detected in the frame
+        :return: Body clsoest to camera
+        """
+        # Identify the body closest to camera and use only it for further processing
+        closest_body_idx = None
+        closest_body_distance = float("inf")
+        for body_idx in range(number_bodies):
+            x = self.__body_frame.get_body(body_idx).joints[pykinect.K4ABT_JOINT_SPINE_CHEST].position.z
+            y = self.__body_frame.get_body(body_idx).joints[pykinect.K4ABT_JOINT_SPINE_CHEST].position.y
+            z = self.__body_frame.get_body(body_idx).joints[pykinect.K4ABT_JOINT_SPINE_CHEST].position.z
+            sq_dist_camera = x * x + y * y + z * z
+            if sq_dist_camera < closest_body_distance:
+                closest_body_idx = body_idx
+                closest_body_distance = sq_dist_camera
+
+        body = self.__body_frame.get_body(closest_body_idx)
+
+        return body
 
     def initialize_filters(self, body: pykinect.Body, t0: float):
         """

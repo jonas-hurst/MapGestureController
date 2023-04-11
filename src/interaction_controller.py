@@ -315,7 +315,7 @@ class InteractionController:
                 self.reference_screenpos_for_rel_pointing = coords_r
             if self.reference_screen_point_for_rel_pointing is None:
                 self.reference_screen_point_for_rel_pointing = intersect_point_r
-            hand_pointing_to_screen_r, coords_r, intersect_point_r = self.handle_fine_pointing(bodyresult.pointer_start, bodyresult.pointer_end_right, message, "right")
+            hand_pointing_to_screen_r, coords_r, intersect_point_r = self.handle_fine_pointing(bodyresult.pointer_start_right, bodyresult.pointer_end_right, message, "right")
         elif hand_pointing_to_screen_r:
             # Handle normal pointing mode for right hand
             self.right_hand_relative_pointing = False
@@ -338,7 +338,7 @@ class InteractionController:
                 self.reference_screenpos_for_rel_pointing = coords_l
             if self.reference_screen_point_for_rel_pointing is None:
                 self.reference_screen_point_for_rel_pointing = intersect_point_l
-            hand_pointing_to_screen_l, coords_l, intersect_point_l = self.handle_fine_pointing(bodyresult.pointer_start, bodyresult.pointer_end_left, message, "left")
+            hand_pointing_to_screen_l, coords_l, intersect_point_l = self.handle_fine_pointing(bodyresult.pointer_start_left, bodyresult.pointer_end_left, message, "left")
         elif hand_pointing_to_screen_l:
             # Handle normal pointing mode for left hand
             self.left_hand_relative_pointing = False

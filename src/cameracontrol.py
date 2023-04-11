@@ -23,7 +23,6 @@ class BodyResult:
         self.chest: geom.Point3D = geom.Point3D(body.joints[pykinect.K4ABT_JOINT_SPINE_CHEST].position.x,
                                                 body.joints[pykinect.K4ABT_JOINT_SPINE_CHEST].position.y,
                                                 body.joints[pykinect.K4ABT_JOINT_SPINE_CHEST].position.z)
-        self.pointer_start = self.chest
 
         self.left_hand_state: HandState = left_hand_state
         self.left_hand_tip: geom.Point3D = geom.Point3D(body.joints[pykinect.K4ABT_JOINT_HANDTIP_LEFT].position.x,
@@ -38,8 +37,10 @@ class BodyResult:
         self.left_shoulder: geom.Point3D = geom.Point3D(body.joints[pykinect.K4ABT_JOINT_SHOULDER_LEFT].position.x,
                                                         body.joints[pykinect.K4ABT_JOINT_SHOULDER_LEFT].position.y,
                                                         body.joints[pykinect.K4ABT_JOINT_SHOULDER_LEFT].position.z)
+
+        self.pointer_start_left = self.left_shoulder
         self.pointer_end_left = self.left_hand
-        self.left_pointer: geom.Line = geom.Line.from_points(self.pointer_start, self.pointer_end_left)
+        self.left_pointer: geom.Line = geom.Line.from_points(self.pointer_start_left, self.pointer_end_left)
 
         self.right_hand_state: HandState = right_hand_state
         self.right_hand_tip: geom.Point3D = geom.Point3D(body.joints[pykinect.K4ABT_JOINT_HANDTIP_RIGHT].position.x,
@@ -54,8 +55,10 @@ class BodyResult:
         self.right_shoulder: geom.Point3D = geom.Point3D(body.joints[pykinect.K4ABT_JOINT_SHOULDER_RIGHT].position.x,
                                                          body.joints[pykinect.K4ABT_JOINT_SHOULDER_RIGHT].position.y,
                                                          body.joints[pykinect.K4ABT_JOINT_SHOULDER_RIGHT].position.z)
+
+        self.pointer_start_right = self.right_shoulder
         self.pointer_end_right = self.right_hand
-        self.right_pointer: geom.Line = geom.Line.from_points(self.pointer_start, self.right_hand)
+        self.right_pointer: geom.Line = geom.Line.from_points(self.pointer_start_right, self.right_hand)
 
 
 class Hand:

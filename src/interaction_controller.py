@@ -212,7 +212,7 @@ class InteractionController:
         except AttributeError:
             add_item_to_history(self.chest_coordinate_history, Point3D(0, 0, 0), hand_coordinate_history_length)
 
-        hand_state_history_length = 7
+        hand_state_history_length = 5
 
         try:
             add_item_to_history(self.left_hand_state_history, bodyresult.left_hand_state, hand_state_history_length)

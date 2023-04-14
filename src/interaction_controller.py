@@ -1,5 +1,3 @@
-import math
-
 from cameracontrol import *
 from screen import *
 import geom
@@ -9,6 +7,7 @@ import touchcontrol as tc
 
 from collections import Counter
 import typing
+
 
 class CameraException(Exception):
     pass
@@ -315,7 +314,7 @@ class InteractionController:
                 self.reference_screenpos_for_rel_pointing = coords_r
             if self.reference_screen_point_for_rel_pointing is None:
                 self.reference_screen_point_for_rel_pointing = intersect_point_r
-            hand_pointing_to_screen_r, coords_r, intersect_point_r = self.handle_fine_pointing(bodyresult.pointer_start_right, bodyresult.pointer_end_right, message, "right")
+            hand_pointing_to_screen_r, coords_r, intersect_point_r = self.handle_fine_pointing(bodyresult.pointer_start_right, bodyresult.pointer_end_right)
         elif hand_pointing_to_screen_r:
             # Handle normal pointing mode for right hand
             self.right_hand_relative_pointing = False
@@ -323,7 +322,7 @@ class InteractionController:
             self.reference_handpos_for_rel_pointing = None
             self.reference_screen_for_rel_pointing = None
             self.reference_screen_point_for_rel_pointing = None
-            coords_r = self.handle_coarse_pointing(coords_r, self.prev_righthand_pointing, message, "right")
+            coords_r = self.handle_coarse_pointing(coords_r, self.prev_righthand_pointing)
 
         # detect and handle fine relative pointing for left hand
         if (hand_pointing_to_screen_l or self.left_hand_relative_pointing) and not hand_pointing_to_screen_r \
@@ -338,7 +337,7 @@ class InteractionController:
                 self.reference_screenpos_for_rel_pointing = coords_l
             if self.reference_screen_point_for_rel_pointing is None:
                 self.reference_screen_point_for_rel_pointing = intersect_point_l
-            hand_pointing_to_screen_l, coords_l, intersect_point_l = self.handle_fine_pointing(bodyresult.pointer_start_left, bodyresult.pointer_end_left, message, "left")
+            hand_pointing_to_screen_l, coords_l, intersect_point_l = self.handle_fine_pointing(bodyresult.pointer_start_left, bodyresult.pointer_end_left)
         elif hand_pointing_to_screen_l:
             # Handle normal pointing mode for left hand
             self.left_hand_relative_pointing = False
@@ -346,13 +345,11 @@ class InteractionController:
             self.reference_handpos_for_rel_pointing = None
             self.reference_screen_for_rel_pointing = None
             self.reference_screen_point_for_rel_pointing = None
-            coords_l = self.handle_coarse_pointing(coords_l, self.prev_lefthand_pointing, message, "left")
+            coords_l = self.handle_coarse_pointing(coords_l, self.prev_lefthand_pointing)
 
         # make sure both pointers dont come too close to each other
         # important to not zoom out "inifinitely" when they are very close
-
         pointer_min_dist = 80  # minimum distance that both pointers must be apart from each other
-
         if hand_pointing_to_screen_l and hand_pointing_to_screen_r:
             try:
                 coord_dist = math.sqrt((coords_r[0]-coords_l[0])**2 + (coords_r[1]-coords_l[1])**2)
@@ -484,13 +481,11 @@ class InteractionController:
 
         return intersection_screen, -1, -1, intersect_point
 
-    def handle_fine_pointing(self, pointer_start: Point3D, pointer_end: Point3D, message: dict, msg_hand: str) -> tuple[bool, tuple[int, int], Point3D]:
+    def handle_fine_pointing(self, pointer_start: Point3D, pointer_end: Point3D) -> tuple[bool, tuple[int, int], Point3D]:
         """
         Method to handle the fine pointing mode.
         :param pointer_start: Point of body trackign where the pointer starts
         :param pointer_end: Point of body tracking where the pointer ends
-        :param message: Message to be sent through websocket server
-        :param msg_hand: name of hand that is currently processed for websocket
         :return: Updated location where user is pointing at: Bool value if pointing at screen, tuple of px-coordiantes
         """
 
@@ -547,13 +542,11 @@ class InteractionController:
 
         return pointing_to_screen, (screen_x, screen_y), intersect_point
 
-    def handle_coarse_pointing(self, coords: tuple[int, int], prev_coords: tuple[int, int], message: dict, msg_hand: str) -> tuple[int, int]:
+    def handle_coarse_pointing(self, coords: tuple[int, int], prev_coords: tuple[int, int]) -> tuple[int, int]:
         """
         Method to handle normal (absolute) pointing.
         :param coords: Coordinates where operator is currently pointing at
         :param prev_coords: Coordinates where operator pointed at previously
-        :param message: Message to be sent through websocket server
-        :param msg_hand: string to identify hand in websocket message. "left" or "right"
         :return: Updated px-coordinates ons creen where user is pointing at: Tuple of ints
         """
 

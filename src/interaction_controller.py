@@ -348,6 +348,49 @@ class InteractionController:
             self.reference_screen_point_for_rel_pointing = None
             coords_l = self.handle_coarse_pointing(coords_l, self.prev_lefthand_pointing, message, "left")
 
+        # make sure both pointers dont come too close to each other
+        # important to not zoom out "inifinitely" when they are very close
+
+        pointer_min_dist = 80  # minimum distance that both pointers must be apart from each other
+
+        if hand_pointing_to_screen_l and hand_pointing_to_screen_r:
+            try:
+                coord_dist = math.sqrt((coords_r[0]-coords_l[0])**2 + (coords_r[1]-coords_l[1])**2)
+            except ZeroDivisionError:
+                # exception if both pointers should be at exactly the same location
+                # will result in both pointers being placed at centerpoint later
+                # not nice, but also not too big of an issue
+                coord_dist = 0.001
+
+            if coord_dist < pointer_min_dist:
+
+                scale_factor = pointer_min_dist / coord_dist
+
+                x_diff = abs(coords_r[0] - coords_l[0])
+                y_diff = abs(coords_r[1] - coords_l[1])
+
+                center_x = min(coords_r[0], coords_l[0]) + int(x_diff/2)
+                center_y = min(coords_r[1], coords_l[1]) + int(y_diff/2)
+
+                coord_r_x = center_x + int(scale_factor * (coords_r[0] - center_x))
+                coord_r_y = center_y + int(scale_factor * (coords_r[1] - center_y))
+                coord_l_x = center_x + int(scale_factor * (coords_l[0] - center_x))
+                coord_l_y = center_y + int(scale_factor * (coords_l[1] - center_y))
+
+                coords_r = (coord_r_x, coord_r_y)
+                coords_l = (coord_l_x, coord_l_y)
+
+        # Update data to be sent through websocket connection
+        message["right"]["present"] = hand_pointing_to_screen_r
+        message["right"]["fine"] = self.right_hand_relative_pointing
+        message["right"]["position"]["x"] = coords_r[0]
+        message["right"]["position"]["y"] = coords_r[1]
+
+        message["left"]["present"] = hand_pointing_to_screen_l
+        message["left"]["fine"] = self.left_hand_relative_pointing
+        message["left"]["position"]["x"] = coords_l[0]
+        message["left"]["position"]["y"] = coords_l[1]
+
         result_righthand = (hand_pointing_to_screen_r, coords_r, intersect_point_r)
         result_lefthand = (hand_pointing_to_screen_l, coords_l, intersect_point_l)
 
@@ -502,12 +545,6 @@ class InteractionController:
                 intersect_point = int_point
                 break
 
-        # Update data to be sent through websocket connection
-        message[msg_hand]["present"] = pointing_to_screen
-        message[msg_hand]["fine"] = True
-        message[msg_hand]["position"]["x"] = screen_x
-        message[msg_hand]["position"]["y"] = screen_y
-
         return pointing_to_screen, (screen_x, screen_y), intersect_point
 
     def handle_coarse_pointing(self, coords: tuple[int, int], prev_coords: tuple[int, int], message: dict, msg_hand: str) -> tuple[int, int]:
@@ -528,12 +565,6 @@ class InteractionController:
             screen_x = prev_screen_x
         if abs(screen_y - prev_screen_y) < 5:
             screen_y = prev_screen_y
-
-        # Update message for websocket server
-        message[msg_hand]["present"] = True
-        message[msg_hand]["fine"] = False
-        message[msg_hand]["position"]["x"] = screen_x
-        message[msg_hand]["position"]["y"] = screen_y
 
         coords = (screen_x, screen_y)
 

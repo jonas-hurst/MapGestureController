@@ -10,8 +10,7 @@ class KeyPointClassifier(object):
         model_path='src/model/keypoint_classifier/keypoint_classifier.tflite',
         num_threads=1,
     ):
-        self.interpreter = lite.Interpreter(model_path=model_path,
-                                               num_threads=num_threads)
+        self.interpreter = lite.Interpreter(model_path=model_path, num_threads=num_threads)
 
         self.interpreter.allocate_tensors()
         self.input_details = self.interpreter.get_input_details()

@@ -1,2 +1,2 @@
-from src.utils.cvfpscalc import CvFpsCalc
-from src.utils.one_euro_filter import OneEuroFilter
+from .cvfpscalc import CvFpsCalc
+from .one_euro_filter import OneEuroFilter

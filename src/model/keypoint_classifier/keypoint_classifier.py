@@ -7,7 +7,7 @@ from tensorflow import lite
 class KeyPointClassifier(object):
     def __init__(
         self,
-        model_path='src/model/keypoint_classifier/keypoint_classifier.tflite',
+        model_path='./model/keypoint_classifier/keypoint_classifier.tflite',
         num_threads=1,
     ):
         self.interpreter = lite.Interpreter(model_path=model_path, num_threads=num_threads)

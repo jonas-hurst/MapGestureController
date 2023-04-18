@@ -1,4 +1,4 @@
-from src.touchcontrol._wrapper import *
+from ._wrapper import *
 
 
 def finger_down(coords: tuple[int, int]):

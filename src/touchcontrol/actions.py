@@ -1,4 +1,4 @@
-from src.touchcontrol.controls import *
+from .controls import *
 
 
 def tap(coords: tuple[int, int]):

@@ -6,3 +6,6 @@ src/test.py
 src/exampleBodyTrackingColorCamera.py
 
 scripts
+
+build
+dist

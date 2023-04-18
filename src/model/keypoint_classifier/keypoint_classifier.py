@@ -4,10 +4,13 @@ import numpy as np
 from tensorflow import lite
 
 
+KEYPOITN_CLASSIFIER_MODEL_PATH = './model/keypoint_classifier/keypoint_classifier.tflite'
+
+
 class KeyPointClassifier(object):
     def __init__(
         self,
-        model_path='./model/keypoint_classifier/keypoint_classifier.tflite',
+        model_path=KEYPOITN_CLASSIFIER_MODEL_PATH,
         num_threads=1,
     ):
         self.interpreter = lite.Interpreter(model_path=model_path, num_threads=num_threads)

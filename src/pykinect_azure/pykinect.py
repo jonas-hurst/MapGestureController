@@ -1,10 +1,10 @@
 import ctypes
 
-from pykinect_azure.k4a import _k4a, Device, default_configuration
-from pykinect_azure.k4abt import _k4abt, Tracker, default_tracker_configuration
-from pykinect_azure.k4arecord import _k4arecord
-from pykinect_azure.k4arecord.playback import Playback
-from pykinect_azure.utils import get_k4a_module_path, get_k4abt_module_path, get_k4arecord_module_path
+from .k4a import _k4a, Device, default_configuration
+from .k4abt import _k4abt, Tracker, default_tracker_configuration
+from .k4arecord import _k4arecord
+from .k4arecord.playback import Playback
+from .utils import get_k4a_module_path, get_k4abt_module_path, get_k4arecord_module_path
 
 def initialize_libraries(module_k4a_path=None, module_k4abt_path=None, track_body=False):
     

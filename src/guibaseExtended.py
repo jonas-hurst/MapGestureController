@@ -31,6 +31,7 @@ class GuibaseExtended(Guibase):
         self.tgl_btn_show_feed.Enable(btn_value)
         self.tgl_btn_touchcontrol.Enable(btn_value)
         self.calibrate_button.Enable(btn_value)
+        self.settings_button.Enable(not btn_value)
         if btn_value:
             self.tgl_btn_start_camera.SetLabelText("Stop Camera")
         else:

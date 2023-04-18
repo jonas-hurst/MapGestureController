@@ -73,7 +73,10 @@ class TrackerController:
     Class to perform Processing of Azure Kinect Imagery
     """
     def __init__(self, visualize=True):
-        pykinect.initialize_libraries(track_body=True)
+
+        self.__k4a_path: str = pykinect.get_k4a_module_path()
+        self.__k4a_bt_path: str = pykinect.get_k4abt_module_path()
+        self.__gpu_id = 0  # gpu id for azure kinect body tracking
 
         self.camera_running = False
         self.fps: float = 0
@@ -116,6 +119,11 @@ class TrackerController:
 
         self.__cvFpsCalc = CvFpsCalc(buffer_len=10)
 
+    def initialize_k4a(self):
+        pykinect.initialize_libraries(module_k4a_path=self.__k4a_path,
+                                      module_k4abt_path=self.__k4a_bt_path,
+                                      track_body=True)
+
     def initialize_tracking(self):
         self.__device = self.startCamera()
         self.__tracker = self.startTracker()
@@ -131,6 +139,24 @@ class TrackerController:
     def get_camera_count(self):
         return pykinect.Device.device_get_installed_count()
 
+    def get_k4a_module_path(self) -> str:
+        return self.__k4a_path
+
+    def set_k4a_module_path(self, path: str) -> None:
+        self.__k4a_path = path
+
+    def get_k4a_bt_module_path(self) -> str:
+        return self.__k4a_bt_path
+
+    def set_k4a_bt_module_path(self, path: str) -> None:
+        self.__k4a_bt_path = path
+
+    def get_gpu_id(self) -> int:
+        return self.__gpu_id
+
+    def set_gpu_id(self, gpu_id: int) -> None:
+        self.__gpu_id = gpu_id
+
     def startCamera(self):
         device_config = pykinect.default_configuration
         device_config.color_resolution = pykinect.K4A_COLOR_RESOLUTION_1080P
@@ -145,7 +171,7 @@ class TrackerController:
     def startTracker(self):
         tracker_config = pykinect.default_tracker_configuration
         tracker_config.tracker_processing_mode = pykinect.K4ABT_TRACKER_PROCESSING_MODE_GPU
-        tracker_config.gpu_device_id = 1
+        tracker_config.gpu_device_id = self.__gpu_id
 
         bodytracker = pykinect.start_body_tracker(tracker_configuration=tracker_config)
         return bodytracker

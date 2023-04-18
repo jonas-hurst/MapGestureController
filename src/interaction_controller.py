@@ -5,11 +5,18 @@ from websocketserver import Server
 from constants import *
 import touchcontrol as tc
 
+from model.keypoint_classifier.keypoint_classifier import KEYPOITN_CLASSIFIER_MODEL_PATH
+
+from os.path import isfile
 from collections import Counter
 import typing
 
 
 class CameraException(Exception):
+    pass
+
+
+class K4ANotFoundException(Exception):
     pass
 
 
@@ -56,12 +63,30 @@ class InteractionController:
         self.reference_handpos_for_rel_pointing: Union[None, Point3D] = None
         self.reference_screen_for_rel_pointing: Union[None, Screen] = None
 
+    def check_required_files(self):
+        k4a_path, k4abt_path = self.get_k4a_paths()
+        if not isfile(k4a_path):
+            raise K4ANotFoundException("Couldnt not find Azure Kinect Sensor SDK.\n"
+                                       "If it is not installed, please install it on your system.\n"
+                                       "If it is installed, check the file path in Settings.")
+        if not isfile(k4abt_path):
+            raise K4ANotFoundException("Could not find Azure Kinect Body Tracing SDK.\n"
+                                       "If it is not installed, please install it on your system.\n"
+                                       "If it is installed, check the file path in Settings.")
+
+        if not isfile(KEYPOITN_CLASSIFIER_MODEL_PATH):
+            raise FileNotFoundError(KEYPOITN_CLASSIFIER_MODEL_PATH)
+
+
     def start_camera(self):
         """
         Initializes and starts the camera.
         After initialization, cameraloop starts executing in a new thread.
         :return: None
         """
+
+        self.__tracker_controller.initialize_k4a()
+
         camera_numbers = self.__tracker_controller.get_camera_count()
         if camera_numbers < 1:
             raise CameraException("No camera detected")
@@ -89,6 +114,18 @@ class InteractionController:
         self.screens = screens
         self.screen_total_height = max([screen.px_height for screen in self.screens])
         self.screen_total_width = sum([screen.px_width for screen in self.screens])
+
+    def get_k4a_paths(self) -> tuple[str, str]:
+        return self.__tracker_controller.get_k4a_module_path(), self.__tracker_controller.get_k4a_bt_module_path()
+
+    def get_k4a_path_setfunctions(self) -> tuple[typing.Callable[[str], None], typing.Callable[[str], None]]:
+        return self.__tracker_controller.set_k4a_module_path, self.__tracker_controller.set_k4a_bt_module_path
+
+    def get_k4a_gpu_id(self) -> int:
+        return self.__tracker_controller.get_gpu_id()
+
+    def get_k4a_gpu_id_setfunction(self) -> typing.Callable[[int], None]:
+        return self.__tracker_controller.set_gpu_id
 
     def get_1euro_min_cutoff(self) -> float:
         """ Gets the current Minimum cutoff frequency value used in 1€ filters. """

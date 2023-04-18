@@ -86,7 +86,7 @@ class MainWindow(GuibaseExtended):
         elif item == 3:
             self.interaction_controller.set_screen_environment(SCREENS_IVE)
         elif item == 4:
-            self.interaction_controller.set_screen_environment(SCREEN_IVE_SIMPLE)
+            self.interaction_controller.set_screen_environment(SCREENS_IVE_2)
 
     def on_calibrate(self, event):
         dlg = CalibrateDialogWindow(self,

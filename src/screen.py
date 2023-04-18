@@ -168,17 +168,24 @@ SCREENS_IVE: tuple[Screen, Screen, Screen] = (
     # right screen
     Screen(2,
            Point3D(-1100, -1640,   -1),  # z=-1 to be consistent with middle screen
-           Point3D(-1209,  -360, 1890),
+           Point3D(-1290,  -360, 1890),
            Point3D(0, 0, 0),
            1920, 1080)
 )
 
 
-SCREEN_IVE_SIMPLE: tuple[Screen] = (
-    Screen(4,
-           Point3D( 3300, -1300, -1),
-           Point3D(-3300,  -360,  0),
+SCREENS_IVE_2: tuple[Screen, Screen] = (
+    # left screen
+    Screen(0,
+           Point3D(2000, -1280, 850),
+           Point3D(   0,  0,   0),
            Point3D(0, 0, 0),
-           5760, 1080),
+           1920, 1080),
+    # right screen
+    Screen(1,
+           Point3D(    0, -1280,   0),
+           Point3D(-2000,  0, 850),
+           Point3D(0, 0, 0),
+           1920, 1080)
 )
 

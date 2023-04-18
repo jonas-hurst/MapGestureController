@@ -2,7 +2,7 @@ import wx
 from cv2 import resize,cvtColor, COLOR_BGR2RGB
 import numpy as np
 
-from guibase import Guibase, CalibrateDialog
+from guibase import Guibase, CalibrateDialog, SettingsDialog
 
 
 class GuibaseExtended(Guibase):
@@ -68,3 +68,8 @@ class GuibaseExtended(Guibase):
 class CalibrateDialogExtended(CalibrateDialog):
     def __init__(self, parent):
         CalibrateDialog.__init__(self, parent)
+
+
+class SettingsDialogExtended(SettingsDialog):
+    def __init__(self, parent):
+        SettingsDialog.__init__(self, parent)

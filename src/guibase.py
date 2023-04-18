@@ -35,6 +35,9 @@ class Guibase ( wx.Frame ):
 		self.tgl_btn_start_camera = wx.ToggleButton( self, wx.ID_ANY, u"Start Camera", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer1.Add( self.tgl_btn_start_camera, 0, wx.ALL|wx.EXPAND, 5 )
 
+		self.settings_button = wx.Button( self, wx.ID_ANY, u"Settings", wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer1.Add( self.settings_button, 0, wx.ALL|wx.EXPAND, 5 )
+
 		self.tgl_btn_show_feed = wx.ToggleButton( self, wx.ID_ANY, u"Show Feed", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.tgl_btn_show_feed.Enable( False )
 
@@ -110,6 +113,7 @@ class Guibase ( wx.Frame ):
 		# Connect Events
 		self.Bind( wx.EVT_CLOSE, self.on_close )
 		self.tgl_btn_start_camera.Bind( wx.EVT_TOGGLEBUTTON, self.on_tgl_camera )
+		self.settings_button.Bind( wx.EVT_BUTTON, self.on_settings )
 		self.tgl_btn_show_feed.Bind( wx.EVT_TOGGLEBUTTON, self.on_tgl_show )
 		self.tgl_btn_touchcontrol.Bind( wx.EVT_TOGGLEBUTTON, self.on_tgl_touchcontrol )
 		self.calibrate_button.Bind( wx.EVT_BUTTON, self.on_calibrate )
@@ -128,6 +132,9 @@ class Guibase ( wx.Frame ):
 	def on_tgl_camera( self, event ):
 		event.Skip()
 
+	def on_settings( self, event ):
+		event.Skip()
+
 	def on_tgl_show( self, event ):
 		event.Skip()
 
@@ -144,6 +151,78 @@ class Guibase ( wx.Frame ):
 		event.Skip()
 
 	def on_screen_changed( self, event ):
+		event.Skip()
+
+
+###########################################################################
+## Class SettingsDialog
+###########################################################################
+
+class SettingsDialog ( wx.Dialog ):
+
+	def __init__( self, parent ):
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Settings", pos = wx.DefaultPosition, size = wx.DefaultSize, style = wx.DEFAULT_DIALOG_STYLE )
+
+		self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
+
+		fgSizer3 = wx.FlexGridSizer( 5, 2, 0, 0 )
+		fgSizer3.SetFlexibleDirection( wx.BOTH )
+		fgSizer3.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
+
+		self.m_staticText3 = wx.StaticText( self, wx.ID_ANY, u"k4a library", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText3.Wrap( -1 )
+
+		fgSizer3.Add( self.m_staticText3, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT, 5 )
+
+		self.k4a_path = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 600,-1 ), 0 )
+		fgSizer3.Add( self.k4a_path, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.m_staticText4 = wx.StaticText( self, wx.ID_ANY, u"k4a-bt library", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText4.Wrap( -1 )
+
+		fgSizer3.Add( self.m_staticText4, 0, wx.ALL|wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.k4a_btpath = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 600,-1 ), 0 )
+		fgSizer3.Add( self.k4a_btpath, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		self.m_staticline3 = wx.StaticLine( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
+		fgSizer3.Add( self.m_staticline3, 0, wx.EXPAND |wx.ALL, 5 )
+
+		self.m_staticline4 = wx.StaticLine( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
+		fgSizer3.Add( self.m_staticline4, 0, wx.EXPAND |wx.ALL, 5 )
+
+		self.gpu_id = wx.StaticText( self, wx.ID_ANY, u"GPU ID", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.gpu_id.Wrap( -1 )
+
+		fgSizer3.Add( self.gpu_id, 0, wx.ALL|wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		gpu_idChoices = [ u"0", u"1", u"2", u"3", u"4" ]
+		self.gpu_id = wx.Choice( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, gpu_idChoices, 0 )
+		self.gpu_id.SetSelection( 0 )
+		fgSizer3.Add( self.gpu_id, 0, wx.ALL|wx.EXPAND|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+
+		fgSizer3.Add( ( 0, 0), 1, wx.EXPAND, 5 )
+
+		self.ok = wx.Button( self, wx.ID_ANY, u"Okay", wx.DefaultPosition, wx.DefaultSize, 0 )
+		fgSizer3.Add( self.ok, 0, wx.ALL|wx.ALIGN_RIGHT, 5 )
+
+
+		self.SetSizer( fgSizer3 )
+		self.Layout()
+		fgSizer3.Fit( self )
+
+		self.Centre( wx.BOTH )
+
+		# Connect Events
+		self.ok.Bind( wx.EVT_BUTTON, self.on_ok )
+
+	def __del__( self ):
+		pass
+
+
+	# Virtual event handlers, override them in your derived class
+	def on_ok( self, event ):
 		event.Skip()
 
 

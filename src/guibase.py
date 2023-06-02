@@ -67,7 +67,7 @@ class Guibase ( wx.Frame ):
 
 		screen_choiceChoices = [ u"single screen above FHD", u"single screen above UHD", u"single screen above 1200p", u"IVE", u"IVE2Screens" ]
 		self.screen_choice = wx.Choice( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, screen_choiceChoices, 0 )
-		self.screen_choice.SetSelection( 0 )
+		self.screen_choice.SetSelection( 4 )
 		bSizer1.Add( self.screen_choice, 0, wx.ALL|wx.EXPAND, 5 )
 
 		self.infogrid = wx.grid.Grid( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, 0 )

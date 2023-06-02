@@ -180,12 +180,12 @@ SCREENS_IVE_2: tuple[Screen, Screen] = (
            Point3D(2000, -1280, 850),
            Point3D(   0,  0,   0),
            Point3D(0, 0, 0),
-           1920, 1080),
+           2048, 1080),
     # right screen
     Screen(1,
            Point3D(    0, -1280,   0),
            Point3D(-2000,  0, 850),
            Point3D(0, 0, 0),
-           1920, 1080)
+           2048, 1080)
 )
 

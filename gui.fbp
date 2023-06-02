@@ -587,7 +587,7 @@
                                 <property name="caption"></property>
                                 <property name="caption_visible">1</property>
                                 <property name="center_pane">0</property>
-                                <property name="choices">&quot;Pointer to Object&quot; &quot;Object to Pointer&quot;</property>
+                                <property name="choices">&quot;Pointer to Feature&quot; &quot;Feature to Pointer&quot;</property>
                                 <property name="close_button">1</property>
                                 <property name="context_help"></property>
                                 <property name="context_menu">1</property>

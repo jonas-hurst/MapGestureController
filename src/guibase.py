@@ -60,7 +60,7 @@ class Guibase ( wx.Frame ):
 
 		bSizer1.Add( self.interaction_mechanism_choice, 0, wx.ALL|wx.EXPAND, 5 )
 
-		selection_mechanism_choiceChoices = [ u"Pointer to Object", u"Object to Pointer" ]
+		selection_mechanism_choiceChoices = [ u"Pointer to Feature", u"Feature to Pointer" ]
 		self.selection_mechanism_choice = wx.Choice( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, selection_mechanism_choiceChoices, 0 )
 		self.selection_mechanism_choice.SetSelection( 0 )
 		bSizer1.Add( self.selection_mechanism_choice, 0, wx.ALL|wx.EXPAND, 5 )

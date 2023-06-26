@@ -11,7 +11,7 @@ For this reason, This program interfaces Windows' Winuser.h library (./src/touch
 ## Starting the app
 * Install Azure Kinect Sensor SDK
 * Install Azure Kinect Body Tracking SDK
-* Install python packages via ...
+* Install python packages via `pip install -r requirements.txt`
 * Connect Azure Kinect camera to your
 * run ./src/app.py
 

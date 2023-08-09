@@ -8,6 +8,10 @@ Supports: Pan, Zoom and Retrieve operations for maps on the web
 To achieve panning, zooming and retrieving, this app simulates Touchscreen interactions.
 For this reason, This program interfaces Windows' Winuser.h library (./src/touchcontrol/_wrapper.py). It is therefore **WINDOWS ONLY**.
 
+
+https://github.com/jonas-hurst/MapGestureController/assets/76062450/ee1b6a6d-1fe2-47d1-a7d1-bdeda7c36a7b
+
+
 ## Starting the app
 * Install Azure Kinect Sensor SDK
 * Install Azure Kinect Body Tracking SDK

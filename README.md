@@ -11,6 +11,10 @@ For this reason, This program interfaces Windows' Winuser.h library (./src/touch
 
 https://github.com/jonas-hurst/MapGestureController/assets/76062450/ee1b6a6d-1fe2-47d1-a7d1-bdeda7c36a7b
 
+## Publication
+This work has been published in the AGILE 2024 conference proceedings. Please refer to this publication for more information:\
+*Hurst, J., Degbelo, A. and Kray, C. (2024) ‘FreeMapRetrieve: freehand gestures for retrieve operations in large-screen map environments’, in Proceedings of the 27th AGILE Conference on Geographic Information Science (AGILE 2024). Glasgow, Scotland, United Kingdom.*
+
 
 ## Starting the app
 * Install Azure Kinect Sensor SDK
